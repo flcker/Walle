@@ -17,6 +17,12 @@ export default function Navbar() {
           <Link href="/archives" className="hover:text-primary transition-colors">
             归档
           </Link>
+          <Link href="/categories" className="hover:text-primary transition-colors">
+            分类
+          </Link>
+          <Link href="/tags" className="hover:text-primary transition-colors">
+            标签
+          </Link>
           <NavbarClient />
         </div>
       </nav>

@@ -31,6 +31,7 @@ export default async function PaginatedPage({ params }: Props) {
             date={post.date}
             summary={post.summary}
             tags={post.tags}
+            category={post.category}
           />
         ))}
       </div>

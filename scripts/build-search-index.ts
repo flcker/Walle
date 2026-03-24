@@ -13,6 +13,7 @@ async function main() {
     title: post.title,
     date: post.date,
     tags: post.tags,
+    category: post.category,
     summary: post.summary,
   }));
 

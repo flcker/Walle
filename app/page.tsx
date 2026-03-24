@@ -18,6 +18,7 @@ export default async function HomePage() {
               date={post.date}
               summary={post.summary}
               tags={post.tags}
+              category={post.category}
             />
           ))
         )}

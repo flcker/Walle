@@ -5,6 +5,8 @@ import type {
   ArchiveListProps,
   CalendarProps,
   PaginationProps,
+  TagListProps,
+  CategoryListProps,
 } from "./types";
 
 const theme = siteConfig.theme;
@@ -46,5 +48,19 @@ export const ThemedPagination = dynamic<PaginationProps>(
   () =>
     import(`../themes/${theme}/Pagination`).catch(() =>
       import("../themes/base/Pagination")
+    )
+);
+
+export const ThemedTagList = dynamic<TagListProps>(
+  () =>
+    import(`../themes/${theme}/TagList`).catch(() =>
+      import("../themes/base/TagList")
+    )
+);
+
+export const ThemedCategoryList = dynamic<CategoryListProps>(
+  () =>
+    import(`../themes/${theme}/CategoryList`).catch(() =>
+      import("../themes/base/CategoryList")
     )
 );

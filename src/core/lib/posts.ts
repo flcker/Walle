@@ -56,6 +56,7 @@ export async function getAllPosts(): Promise<Post[]> {
         date: date.toISOString(),
         summary,
         tags: (data.tags as string[]) ?? [],
+        category: (data.category as string) ?? '',
         content,
         rawContent,
       } satisfies Post;
@@ -94,5 +95,59 @@ export async function getPaginatedPosts(
   const totalPages = Math.max(1, Math.ceil(total / postsPerPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const posts = all.slice((safePage - 1) * postsPerPage, safePage * postsPerPage);
+  return { posts, total, totalPages };
+}
+
+export async function getAllTags(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPosts();
+  const map = new Map<string, number>();
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      map.set(tag, (map.get(tag) ?? 0) + 1);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export async function getAllCategories(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPosts();
+  const map = new Map<string, number>();
+  for (const post of posts) {
+    if (post.category) {
+      map.set(post.category, (map.get(post.category) ?? 0) + 1);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export async function getPostsByTag(
+  tag: string,
+  page: number
+): Promise<{ posts: Post[]; total: number; totalPages: number }> {
+  const all = await getAllPosts();
+  const filtered = all.filter((p) => p.tags.includes(tag));
+  const { postsPerPage } = siteConfig;
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / postsPerPage));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const posts = filtered.slice((safePage - 1) * postsPerPage, safePage * postsPerPage);
+  return { posts, total, totalPages };
+}
+
+export async function getPostsByCategory(
+  category: string,
+  page: number
+): Promise<{ posts: Post[]; total: number; totalPages: number }> {
+  const all = await getAllPosts();
+  const filtered = all.filter((p) => p.category === category);
+  const { postsPerPage } = siteConfig;
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / postsPerPage));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const posts = filtered.slice((safePage - 1) * postsPerPage, safePage * postsPerPage);
   return { posts, total, totalPages };
 }

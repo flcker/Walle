@@ -2,6 +2,7 @@
 title: Hello Walle
 date: 2026-03-23
 summary: 瓦力博客系统的第一篇文章。
+category: 测试
 tags: [walle, test]
 ---
 
