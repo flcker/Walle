@@ -315,6 +315,11 @@ new Fuse(data, {
 
 ### Phase 6 — 自动化部署
 
+> 部署上线只需三步：
+> 1. 将 Walle/ 目录推送到 GitHub 仓库;
+> 2. 在仓库 `Settings` → `Pages` → `Source` 选择 `GitHub Actions`;
+> 3. 若仓库名非 username.github.io，在 Settings → Variables → Actions 添加 `NEXT_PUBLIC_BASE_PATH=/仓库名`;
+
 #### Workflow 触发条件
 
 ```yaml
