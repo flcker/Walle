@@ -19,27 +19,25 @@ Walle（瓦力）是基于 Next.js 14 的静态博客系统，专注于极简配
 - 自定义主题放在 `src/themes/<theme-name>/`，只需放置**差异化组件**，其余自动继承 base
 - 主题组件统一通过 `src/core/ThemeResolver.tsx` 导出，命名格式 `Themed<ComponentName>`
 - 新增主题组件时：① 在 `types/index.ts` 定义 Props 类型 ② 在 `ThemeResolver.tsx` 注册 ③ 在 `base/` 实现默认版本
+- 详细步骤见 `.claude/rules/theme.md`
 
 ### Server / Client 组件边界
 - 页面和布局组件默认为 Server Component
 - 需要状态、事件处理的部分拆分为独立的 `*Client.tsx` 文件并标注 `"use client"`
 - 搜索弹窗等重型客户端组件必须通过 `dynamic({ ssr: false })` 懒加载
+- 详细规范见 `.claude/rules/nextjs.md`
 
 ### 样式规范
 - 使用 Tailwind CSS 语义色彩类（`bg-background`、`text-primary`、`border-border` 等）
 - **禁止**使用 Tailwind 原始色值（`bg-gray-100`、`text-blue-500` 等），统一用 CSS 变量驱动
-- 色彩变量定义在 `app/globals.css`，自动支持 `prefers-color-scheme` 深色模式
 - 布局约束：内容区最大宽度 `max-w-3xl`，水平内边距 `px-4`
+- 完整色彩表和交互状态规范见 `.claude/rules/style.md`
 
 ### 文章系统
 - 文章放在 `content/posts/` 目录，文件名即 slug
 - 日期优先级：Frontmatter `date` > 文件 mtime
 - 文章解析逻辑集中在 `src/core/lib/posts.ts`，禁止在页面组件中直接操作文件系统
-
-### 搜索索引
-- 搜索索引 `public/search-index.json` 在构建时由 `scripts/build-search-index.ts` 生成
-- 通过 `package.json` 的 `prebuild` 钩子自动触发，无需手动执行
-- 修改文章解析逻辑时同步确认索引字段（`SearchIndexItem` 类型）
+- Frontmatter 规范、解析管线、数据访问函数列表见 `.claude/rules/content.md`
 
 ## 开发命令
 
@@ -74,6 +72,72 @@ plan/Plan.md                # 分阶段执行计划
 | `.claude/rules/nextjs.md` | Server/Client 组件边界、路由结构、静态生成要求 |
 | `.claude/rules/deployment.md` | GitHub Actions 部署流程、basePath 配置 |
 
+## 计划文档
+
+- 所有计划文档统一放在 `plan/` 目录下
+- 新建文件时使用**功能名 + 日期**的方式命名，格式：`YYYYMMDD-<功能名>-Plan.md`（例：`20260324-TagsAndCategories-Plan.md`）
+- **禁止**覆盖 `plan/` 目录下已有文件，每次新建独立文件
+
 ## 项目文档
 
-完整的实现细节、技术决策记录和部署说明见 `doc/Develop.md`。
+完整的实现细节和技术决策记录见 `doc/Develop.md`；部署规范见 `.claude/rules/deployment.md`。
+
+## Project Context
+
+> 此章节记录项目当前状态，每次功能迭代后同步更新。
+
+### 已实现功能
+
+| 功能 | 路由 / 文件 | 状态 |
+|:---|:---|:---|
+| 文章列表（分页） | `app/page.tsx`、`app/posts/page/[page]/page.tsx` | ✅ 完成 |
+| 文章详情 | `app/posts/[slug]/page.tsx` | ✅ 完成 |
+| 归档（按年分组 + 日历） | `app/archives/page.tsx` | ✅ 完成 |
+| 客户端全文搜索 | `NavbarClient.tsx` + `SearchModal.tsx` | ✅ 完成 |
+| 分类列表 & 过滤页 | `app/categories/` | ✅ 完成 |
+| 标签列表 & 过滤页 | `app/tags/` | ✅ 完成 |
+
+### 数据模型（当前版本）
+
+`Post` 接口字段：`slug` `title` `date` `summary` `tags: string[]` `category: string` `content` `rawContent`
+
+> Frontmatter 完整规范见 `.claude/rules/content.md`。
+
+### 主题组件注册表（当前）
+
+| 导出名 | Props 类型 | base 实现 |
+|:---|:---|:---|
+| `ThemedNavbar` | — | `Navbar.tsx` |
+| `ThemedPostCard` | `PostCardProps` | `PostCard.tsx` |
+| `ThemedArchiveList` | `ArchiveListProps` | `ArchiveList.tsx` |
+| `ThemedCalendar` | `CalendarProps` | `Calendar.tsx` |
+| `ThemedPagination` | `PaginationProps` | `Pagination.tsx` |
+| `ThemedTagList` | `TagListProps` | `TagList.tsx` |
+| `ThemedCategoryList` | `CategoryListProps` | `CategoryList.tsx` |
+
+### 路由结构（当前）
+
+```
+app/
+├── page.tsx                              # 首页（第 1 页）
+├── posts/
+│   ├── [slug]/page.tsx                   # 文章详情
+│   └── page/[page]/page.tsx              # 文章分页
+├── archives/page.tsx                     # 归档
+├── categories/
+│   ├── page.tsx                          # 分类列表
+│   └── [category]/
+│       ├── page.tsx                      # 分类文章（第 1 页）
+│       └── page/[page]/page.tsx          # 分类文章分页
+└── tags/
+    ├── page.tsx                          # 标签列表
+    └── [tag]/
+        ├── page.tsx                      # 标签文章（第 1 页）
+        └── page/[page]/page.tsx          # 标签文章分页
+```
+
+### 待开发（计划中）
+
+- Phase 5：RSS Feed
+- Phase 6：sitemap.xml
+- Phase 7：文章首次提交时间作为日期回退

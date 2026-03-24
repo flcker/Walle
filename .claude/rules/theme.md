@@ -11,7 +11,9 @@ src/themes/
 │   ├── ArchiveList.tsx
 │   ├── Calendar.tsx
 │   ├── Pagination.tsx
-│   └── SearchModal.tsx
+│   ├── SearchModal.tsx
+│   ├── TagList.tsx
+│   └── CategoryList.tsx
 └── <your-theme>/         # 自定义主题（只放需要覆盖的组件）
     └── PostCard.tsx      # 示例：只覆盖文章卡片
 ```

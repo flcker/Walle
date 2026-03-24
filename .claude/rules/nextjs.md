@@ -36,14 +36,24 @@ import SearchModal from "./SearchModal";
 
 ```
 app/
-├── page.tsx                    # 首页（第一页文章列表）
-├── layout.tsx                  # 全局布局（Navbar + 字体 + 样式）
-├── globals.css                 # CSS 变量 + 全局样式
+├── page.tsx                              # 首页（第一页文章列表）
+├── layout.tsx                            # 全局布局（Navbar + 字体 + 样式）
+├── globals.css                           # CSS 变量 + 全局样式
 ├── archives/
-│   └── page.tsx                # 归档页（按年分组 + 日历）
-└── posts/
-    ├── [slug]/page.tsx         # 文章详情页
-    └── page/[page]/page.tsx    # 分页列表页
+│   └── page.tsx                          # 归档页（按年分组 + 日历）
+├── posts/
+│   ├── [slug]/page.tsx                   # 文章详情页
+│   └── page/[page]/page.tsx              # 文章分页列表
+├── categories/
+│   ├── page.tsx                          # 分类列表页
+│   └── [category]/
+│       ├── page.tsx                      # 分类文章（第 1 页）
+│       └── page/[page]/page.tsx          # 分类文章分页
+└── tags/
+    ├── page.tsx                          # 标签列表页
+    └── [tag]/
+        ├── page.tsx                      # 标签文章（第 1 页）
+        └── page/[page]/page.tsx          # 标签文章分页
 ```
 
 ## 静态生成要求

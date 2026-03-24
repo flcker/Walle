@@ -9,6 +9,7 @@
 title: 文章标题（必填）
 date: 2026-03-24         # 推荐填写，ISO 8601 格式
 summary: 摘要文字         # 可选，未填写则取正文前 200 字
+category: 技术            # 可选，单个分类，空字符串表示未分类
 tags: [tag1, tag2]       # 可选
 ---
 
@@ -30,6 +31,10 @@ tags: [tag1, tag2]       # 可选
   - `getPostBySlug(slug)` — 获取单篇文章（含 HTML 内容）
   - `getGroupedArchives()` — 获取按年份分组的归档
   - `getPaginatedPosts(page)` — 分页获取文章列表
+  - `getAllTags()` — 获取所有标签及文章数（按数量降序）
+  - `getAllCategories()` — 获取所有分类及文章数（按数量降序）
+  - `getPostsByTag(tag, page)` — 按标签过滤文章（分页）
+  - `getPostsByCategory(category, page)` — 按分类过滤文章（分页）
 
 ## Markdown 渲染管线
 
@@ -49,5 +54,5 @@ gray-matter（解析 Frontmatter）
 
 - 索引文件：`public/search-index.json`
 - 生成时机：`npm run build` 前自动执行 `prebuild` 钩子
-- 索引字段对应 `SearchIndexItem` 类型：`slug`、`title`、`summary`、`tags`、`date`
+- 索引字段对应 `SearchIndexItem` 类型：`slug`、`title`、`summary`、`tags`、`category`、`date`
 - 修改 `SearchIndexItem` 类型时，同步更新 `scripts/build-search-index.ts`
