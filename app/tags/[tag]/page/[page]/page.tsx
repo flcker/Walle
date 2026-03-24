@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 
   for (const { name } of tags) {
     const { totalPages } = await getPostsByTag(name, 1);
-    for (let p = 2; p <= totalPages; p++) {
+    for (let p = 1; p <= totalPages; p++) {
       params.push({ tag: encodeURIComponent(name), page: String(p) });
     }
   }

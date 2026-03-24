@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 
   for (const { name } of categories) {
     const { totalPages } = await getPostsByCategory(name, 1);
-    for (let p = 2; p <= totalPages; p++) {
+    for (let p = 1; p <= totalPages; p++) {
       params.push({ category: encodeURIComponent(name), page: String(p) });
     }
   }
