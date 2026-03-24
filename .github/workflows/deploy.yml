@@ -31,14 +31,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: Walle/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: Walle
         run: npm ci
 
       - name: Build
-        working-directory: Walle
         # 仓库名作为 basePath（用户主页仓库 username.github.io 时留空即可）
         # 示例：NEXT_PUBLIC_BASE_PATH=/my-blog
         env:
@@ -49,7 +47,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: Walle/out
+          path: out
 
   deploy:
     needs: build
