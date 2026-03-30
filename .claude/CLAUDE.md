@@ -34,16 +34,25 @@ Walle（瓦力）是基于 Next.js 14 的静态博客系统，专注于极简配
 - 完整色彩表和交互状态规范见 `.claude/rules/style.md`
 
 ### 文章系统
-- 文章放在 `content/posts/` 目录，文件名即 slug
+- 文章放在 `content/posts/` 目录，文件名即 slug，**不支持子目录**
 - 日期优先级：Frontmatter `date` > 文件 mtime
 - 文章解析逻辑集中在 `src/core/lib/posts.ts`，禁止在页面组件中直接操作文件系统
 - Frontmatter 规范、解析管线、数据访问函数列表见 `.claude/rules/content.md`
 
+### 图片系统
+- 图片统一放在 `content/assets/`，**支持任意子目录**（如 `content/assets/2026/`）
+- Markdown 中使用相对路径引用：`![说明](../assets/图片名.png)`
+- `npm run build` 的 prebuild 阶段自动将 `content/assets/` 递归同步到 `public/assets/`
+- `rehypeAssetPath` 插件（`src/core/lib/posts.ts`）在构建时将 `../assets/` 规范化并补全 basePath
+- **禁止**在 Markdown 中写 `/assets/` 绝对路径（编辑器无法预览）
+- 本地 `npm run dev` 不自动同步图片，新增图片后需先执行 `npm run prebuild`
+
 ## 开发命令
 
 ```bash
-npm run dev      # 本地开发（不生成搜索索引）
-npm run build    # 构建（自动执行 prebuild 生成索引）
+npm run dev      # 本地开发（不执行 prebuild，不同步图片/索引）
+npm run prebuild # 手动生成搜索索引 + 同步 content/assets/ → public/assets/
+npm run build    # 构建（自动执行 prebuild）
 npm run lint     # ESLint 检查
 ```
 
@@ -52,12 +61,13 @@ npm run lint     # ESLint 检查
 ```
 src/core/config.ts          # 站点配置（唯一真相来源）
 src/core/types/index.ts     # 所有共用 TypeScript 类型
-src/core/lib/posts.ts       # 文章解析 & 数据访问层
+src/core/lib/posts.ts       # 文章解析 & 数据访问层（含 rehypeAssetPath 插件）
 src/core/ThemeResolver.tsx  # 主题组件动态加载注册表
 src/themes/base/            # 默认主题完整实现
 app/                        # Next.js App Router 页面
-content/posts/              # Markdown 文章
-scripts/                    # 构建脚本
+content/posts/              # Markdown 文章（平铺，不含子目录）
+content/assets/             # 文章图片（支持子目录，构建时同步到 public/assets/）
+scripts/                    # 构建脚本（搜索索引 + 图片同步）
 doc/Develop.md              # 完整开发文档（实现细节、技术决策）
 plan/Plan.md                # 分阶段执行计划
 ```
@@ -96,6 +106,7 @@ plan/Plan.md                # 分阶段执行计划
 | 客户端全文搜索 | `NavbarClient.tsx` + `SearchModal.tsx` | ✅ 完成 |
 | 分类列表 & 过滤页 | `app/categories/` | ✅ 完成 |
 | 标签列表 & 过滤页 | `app/tags/` | ✅ 完成 |
+| 文章图片支持 | `content/assets/` + `src/core/lib/posts.ts` | ✅ 完成 |
 
 ### 数据模型（当前版本）
 

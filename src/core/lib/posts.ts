@@ -5,6 +5,8 @@ import { remark } from 'remark';
 import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
+import { visit } from 'unist-util-visit';
+import type { Root, Element } from 'hast';
 import { siteConfig } from '../config';
 import type { Post, GroupedArchive } from '../types';
 
@@ -24,11 +26,37 @@ function resolvePostDate(frontmatterDate: unknown, filePath: string): Date {
   return fs.statSync(filePath).mtime;
 }
 
+// rehype 插件：将相对路径图片统一规范化为绝对路径，并补全 basePath
+// ../assets/foo.png      →  /assets/foo.png（本地）
+// ../assets/2026/foo.png →  /Walle/assets/2026/foo.png（GitHub Pages）
+function rehypeAssetPath(basePath: string) {
+  return () => (tree: Root) => {
+    visit(tree, 'element', (node) => {
+      const el = node as Element;
+      if (
+        el.tagName === 'img' &&
+        typeof el.properties?.src === 'string'
+      ) {
+        let src = el.properties.src;
+        if (src.startsWith('../assets/')) {
+          src = src.replace(/^\.\.\/assets\//, '/assets/');
+        }
+        if (basePath && src.startsWith('/')) {
+          src = `${basePath}${src}`;
+        }
+        el.properties.src = src;
+      }
+    });
+  };
+}
+
 // Markdown → HTML（含代码高亮）
 async function markdownToHtml(content: string): Promise<string> {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const result = await remark()
     .use(remarkRehype)
     .use(rehypeHighlight)
+    .use(rehypeAssetPath(basePath))
     .use(rehypeStringify)
     .process(content);
   return result.toString();

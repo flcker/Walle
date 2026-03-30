@@ -22,6 +22,14 @@ async function main() {
   fs.writeFileSync(outPath, JSON.stringify(index), "utf-8");
 
   console.log(`[walle] 索引生成完毕：${index.length} 篇文章 → public/search-index.json`);
+
+  // 将 content/assets/ 递归同步到 public/assets/（支持子路径）
+  const assetsDir = path.join(process.cwd(), 'content', 'assets');
+  const publicAssetsDir = path.join(process.cwd(), 'public', 'assets');
+  if (fs.existsSync(assetsDir)) {
+    fs.cpSync(assetsDir, publicAssetsDir, { recursive: true });
+    console.log('[walle] 图片资源已同步：content/assets/ → public/assets/');
+  }
 }
 
 main().catch((err) => {

@@ -22,3 +22,13 @@ console.log(greet('Walle'));
 - 零依赖配置
 - 运行时主题切换
 - 客户端搜索
+
+## 图片示例
+
+根目录图片：
+
+![Walle Logo](../assets/walle-logo.svg)
+
+子目录图片（`assets/screenshots/`）：
+
+![代码高亮效果](../assets/screenshots/code-highlight.svg)
