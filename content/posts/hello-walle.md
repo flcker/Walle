@@ -39,3 +39,107 @@ tags: [walle, 介绍]
 ### 部署
 
 推送代码后，GitHub Actions 自动构建并发布到 GitHub Pages，全程无需手动操作。
+
+---
+
+## Markdown 语法示例
+
+### 文字样式
+
+**粗体**、*斜体*、***粗斜体***、~~删除线~~、`行内代码`
+
+> 这是一段引用文字。
+>
+> 引用可以跨越多个段落，并支持 **嵌套格式**。
+
+### 列表
+
+无序列表：
+
+- 苹果
+- 香蕉
+  - 大蕉
+  - 小米蕉
+- 樱桃
+
+有序列表：
+
+1. 第一步：安装依赖
+2. 第二步：编写文章
+3. 第三步：构建部署
+
+任务列表：
+
+- [x] 初始化项目
+- [x] 配置主题
+- [ ] 编写文档
+- [ ] 发布上线
+
+### 代码块
+
+行内代码：执行 `npm run build` 构建项目。
+
+JavaScript 代码块：
+
+```javascript
+async function fetchPosts(page = 1) {
+  const res = await fetch(`/api/posts?page=${page}`);
+  if (!res.ok) throw new Error('请求失败');
+  return res.json();
+}
+```
+
+TypeScript 代码块：
+
+```typescript
+interface Post {
+  slug: string;
+  title: string;
+  date: string;
+  tags: string[];
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('zh-CN');
+}
+```
+
+Bash 命令：
+
+```bash
+# 安装依赖并启动开发服务器
+npm install
+npm run dev
+```
+
+### 表格
+
+| 功能 | 状态 | 说明 |
+|:---|:---:|---:|
+| 文章列表 | ✅ | 支持分页 |
+| 分类 / 标签 | ✅ | 自动聚合 |
+| 全文搜索 | ✅ | 客户端 Fuse.js |
+| RSS Feed | 🚧 | 计划中 |
+| 评论系统 | ❌ | 暂不支持 |
+
+### 链接与图片
+
+[访问 GitHub](https://github.com) — 外部链接
+
+图片（本地资源）：
+
+![Walle Logo](../assets/walle-logo.svg)
+
+### 分割线
+
+---
+
+### 嵌套引用
+
+> **注意**
+>
+> > 嵌套引用内容
+> >
+> > 可以继续嵌套下去
+>
+> 回到第一层引用。

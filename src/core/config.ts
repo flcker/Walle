@@ -12,7 +12,9 @@ export const siteConfig = {
   theme: 'liquid-glass',
   themeOptions: {
     // liquid-glass 配色方案：'aurora'（靛蓝极光）| 'sunset'（日落珊瑚）| 'ocean'（深海蓝绿）| 'rose'（玫瑰粉）
-    colorScheme: 'sunset' as 'aurora' | 'sunset' | 'ocean' | 'rose',
+    colorScheme: 'ocean' as 'aurora' | 'sunset' | 'ocean' | 'rose',
+    // 可供切换的配色方案列表（供 NavbarClient 色板切换 UI 使用）
+    colorSchemes: ['aurora', 'sunset', 'ocean', 'rose'] as const,
   },
   postsPerPage: 10,
   features: {

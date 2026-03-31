@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { siteConfig, assetUrl } from "@/src/core/config";
-import NavbarClient from "@/src/themes/base/NavbarClient";
+import NavbarClient from "./NavbarClient";
 
 const { profile } = siteConfig;
 

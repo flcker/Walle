@@ -6,7 +6,8 @@ import { ThemedNavbar, ThemedFooter } from "@/src/core/ThemeResolver";
 import { ThemeGlobalStyles } from "@/src/core/ThemeGlobalStyles";
 
 // 阻塞式内联脚本：在 React 水合前设置正确主题，避免 FOUC
-const themeScript = `(function(){var s=localStorage.getItem('theme');var t=s==='light'||s==='dark'?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();`;
+const defaultColorScheme = (siteConfig as { themeOptions?: { colorScheme?: string } }).themeOptions?.colorScheme ?? 'aurora';
+const themeScript = `(function(){var s=localStorage.getItem('theme');var t=s==='light'||s==='dark'?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var cs=localStorage.getItem('color-scheme')||'${defaultColorScheme}';document.documentElement.setAttribute('data-color-scheme',cs);})();`;
 
 export const metadata: Metadata = {
   title: siteConfig.title,

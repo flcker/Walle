@@ -52,7 +52,9 @@ Walle/
 │   │   ├── ThemeResolver.tsx     # 运行时主题加载器
 │   │   ├── ThemeGlobalStyles.tsx # 主题 CSS 注入（Server Component）
 │   │   ├── lib/
-│   │   │   └── posts.ts          # 文章解析与数据函数
+│   │   │   ├── posts.ts          # 文章解析与数据函数
+│   │   │   ├── useTheme.ts       # 亮/暗模式切换 Hook
+│   │   │   └── useColorScheme.ts # 配色方案切换 Hook
 │   │   └── types/
 │   │       └── index.ts          # 全局 TypeScript 类型定义
 │   └── themes/
@@ -72,6 +74,7 @@ Walle/
 │       │   │   ├── ocean.css     #   深海蓝绿
 │       │   │   └── rose.css      #   玫瑰粉
 │       │   ├── Navbar.tsx
+│       │   ├── NavbarClient.tsx  # 配色方案切换 + 主题切换 + 搜索（Client Component）
 │       │   ├── PostCard.tsx
 │       │   ├── Footer.tsx
 │       │   └── Profile.tsx
@@ -237,17 +240,20 @@ app/layout.tsx <head>
 ```
 
 **有配色方案（如 liquid-glass）**
+
+`ThemeGlobalStyles` 遍历 `schemes/` 目录，将所有 CSS 文件（按文件名排序）全部注入到同一个 `<style>` 中，再追加 `theme.css`：
+
 ```
 app/layout.tsx <head>
   └── <ThemeGlobalStyles />
-        ├── fs.readFileSync(`src/themes/${theme}/schemes/${colorScheme}.css`)
-        │     （颜色变量 + blob 颜色 + 卡片阴影）
+        ├── fs.readdirSync(`src/themes/${theme}/schemes/`)
+        │     → 所有 .css 文件（aurora.css + ocean.css + rose.css + sunset.css）
+        │     → 每个文件的选择器带 html[data-color-scheme="xxx"] 前缀
         └── fs.readFileSync(`src/themes/${theme}/theme.css`)
-              （blob 动画关键帧 + 结构类，无颜色）
               → <style>{ 合并后的 css }</style>
 ```
 
-配色方案通过 `siteConfig.themeOptions.colorScheme` 指定，`ThemeGlobalStyles` 自动按路径加载，找不到时静默忽略（回退到 base 兜底变量）。
+配色方案的选择在客户端运行时进行，通过 `html[data-color-scheme]` 属性驱动（见 useColorScheme 章节）。`siteConfig.themeOptions.colorScheme` 作为默认值使用。
 
 **设计目标**：主题切换（包括颜色变量、动画、特效类、配色方案）完全在 `src/themes/<name>/` 内完成，不需要修改 `app/` 目录下的任何文件。`app/globals.css` 仅保留结构性样式和 base 兜底变量。
 
@@ -256,12 +262,29 @@ app/layout.tsx <head>
 | 组件 | 类型 | 说明 |
 |:---|:---|:---|
 | `Navbar.tsx` | Server Component | 静态导航结构，包含 NavbarClient |
-| `NavbarClient.tsx` | Client Component | 控制搜索弹窗开关状态 |
+| `NavbarClient.tsx` | Client Component | 控制主题切换按钮与搜索弹窗（base 主题）；liquid-glass 主题有自己的 NavbarClient 额外包含配色方案切换 |
 | `PostCard.tsx` | Server Component | 文章卡片 |
 | `ArchiveList.tsx` | Server Component | 按年份分组的归档列表 |
 | `Calendar.tsx` | Server Component | 月历，受 `features.calendar` 控制 |
 | `Pagination.tsx` | Server Component | 翻页导航，仅一页时不渲染 |
 | `SearchModal.tsx` | Client Component (`ssr: false`) | 搜索弹窗主体 |
+
+#### 暗色模式与代码块高亮
+
+`app/layout.tsx` 全局引入 `highlight.js/styles/github.css` 作为代码块亮色兜底基础。
+
+暗色模式兜底规则写在 `app/globals.css` 末尾，覆盖 `github.css` 的亮色 token 颜色：
+
+```css
+/* 响应系统偏好 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hljs { background: #161b22; color: #c9d1d9; }
+}
+/* 响应手动切换 */
+[data-theme="dark"] .hljs { background: #161b22; color: #c9d1d9; }
+```
+
+liquid-glass 主题的每套 scheme.css 末尾额外追加了与该配色方案匹配的 `.hljs-*` token 颜色覆盖，注入优先级高于 `github.css`（内联 `<style>` 后置），因此代码块配色随当前 scheme 自动变化。
 
 ---
 
@@ -349,6 +372,55 @@ new Fuse(data, {
 ```
 
 索引在首次打开搜索弹窗时懒加载，后续通过 `useRef` 缓存实例，不重复请求。键盘导航支持：`↑↓` 切换，`Enter` 跳转，`Esc` 关闭。
+
+---
+
+### Phase 5.5 — 配色方案运行时切换
+
+liquid-glass 主题支持在页面上实时切换配色方案（aurora / sunset / ocean / rose），无需刷新页面。
+
+#### 技术方案
+
+**关键约束**：`ThemeGlobalStyles` 是 Server Component，只能静态注入 CSS，无法运行时替换。
+
+**解法**：构建时将所有 scheme 的 CSS 一次性全部注入，每套 scheme 的选择器带 `html[data-color-scheme="xxx"]` 前缀。客户端切换时只修改 `<html>` 的 `data-color-scheme` 属性，浏览器自动响应对应 scheme 的变量。
+
+#### scheme.css 选择器结构
+
+```css
+/* 亮色 */
+html[data-color-scheme="aurora"] { --color-background: #f0f4ff; ... }
+
+/* 暗色（响应系统偏好） */
+@media (prefers-color-scheme: dark) {
+  html[data-color-scheme="aurora"]:not([data-theme="light"]) { --color-background: #06061a; ... }
+}
+/* 暗色（响应手动切换） */
+html[data-color-scheme="aurora"][data-theme="dark"] { --color-background: #06061a; ... }
+```
+
+#### useColorScheme Hook
+
+`src/core/lib/useColorScheme.ts`：镜像 `useTheme` 的设计，管理 `data-color-scheme` 属性。
+
+- localStorage key：`color-scheme`
+- 默认值：`siteConfig.themeOptions.colorScheme`
+- 挂载前返回默认值（防止 SSR/客户端不一致）
+
+#### 防 FOUC
+
+`app/layout.tsx` 的阻塞内联脚本在 React 水合前同步设置 `data-color-scheme`：
+
+```ts
+var cs = localStorage.getItem('color-scheme') || '${defaultColorScheme}';
+document.documentElement.setAttribute('data-color-scheme', cs);
+```
+
+#### Navbar 中的切换 UI
+
+配色方案切换 UI 属于 liquid-glass 主题的特性，放在 `src/themes/liquid-glass/NavbarClient.tsx`（而非 `base/NavbarClient.tsx`），保证 base 主题不感知此功能，其他主题可各自实现或不实现配色切换。
+
+`liquid-glass/Navbar.tsx` 导入自己的 `./NavbarClient`，base 的 `Navbar.tsx` 仍导入 `./NavbarClient`（base 版本）。
 
 ---
 
@@ -465,7 +537,7 @@ themeOptions: {
 },
 ```
 
-`ThemeGlobalStyles` 会自动将 `schemes/{colorScheme}.css`（颜色）与 `theme.css`（结构）合并后注入。
+`ThemeGlobalStyles` 会注入 `schemes/` 目录下的**所有** CSS 文件，每套 scheme 通过 `html[data-color-scheme="xxx"]` 选择器隔离，运行时切换只需修改 `<html>` 属性。`siteConfig.themeOptions.colorScheme` 用作默认配色方案的初始值。
 
 ### theme.css 结构（推荐）
 
