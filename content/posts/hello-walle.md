@@ -1,34 +1,41 @@
 ---
-title: Hello Walle
-date: 2026-03-23
-summary: 瓦力博客系统的第一篇文章。
-category: 测试
-tags: [walle, test]
+title: 欢迎使用 Walle 博客系统
+date: 2026-03-31
+summary: Walle（瓦力）是一个极简静态博客系统，开箱即用，专注于写作本身。
+category: 介绍
+tags: [walle, 介绍]
 ---
-
-# Hello Walle
-
-这是 **Walle** 博客系统的第一篇测试文章。
-
-## 代码示例
-
-```typescript
-const greet = (name: string) => `Hello, ${name}!`;
-console.log(greet('Walle'));
-```
-
-## 列表
-
-- 零依赖配置
-- 运行时主题切换
-- 客户端搜索
-
-## 图片示例
-
-根目录图片：
 
 ![Walle Logo](../assets/walle-logo.svg)
 
-子目录图片（`assets/screenshots/`）：
+**Walle（瓦力）** 是一个基于 Next.js 14 的极简静态博客系统。所有内容以 Markdown 文件存储，构建后输出纯静态文件，可部署到 GitHub Pages 等任意托管平台。
 
-![代码高亮效果](../assets/screenshots/code-highlight.svg)
+## 功能一览
+
+### 文章
+
+用 Markdown 写作，支持标题、摘要、分类、标签、发布日期等元信息。代码块自动语法高亮，图片直接引用本地资源。
+
+### 分类与标签
+
+每篇文章可以归属一个分类、添加多个标签。系统自动生成分类页和标签页，方便读者按主题浏览。
+
+### 归档
+
+按年份分组展示所有文章，并提供日历视图，直观呈现每月的发文分布。
+
+### 全文搜索
+
+导航栏内置客户端搜索，无需服务端，可快速检索所有文章的标题、摘要和标签。
+
+### 个人信息
+
+支持在页面中展示头像、昵称、简介和社交链接（GitHub、微博、RSS），显示位置可灵活配置：导航栏横幅、导航栏内嵌、首页顶部或底部。
+
+### 主题
+
+内置主题继承机制，自定义主题只需覆盖需要差异化的组件，其余自动继承默认样式，改动最小。
+
+### 部署
+
+推送代码后，GitHub Actions 自动构建并发布到 GitHub Pages，全程无需手动操作。

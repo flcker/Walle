@@ -29,7 +29,7 @@ export default async function PostPage({ params }: Props) {
   });
 
   return (
-    <article className="prose prose-neutral max-w-none">
+    <article className="prose prose-neutral max-w-none dark:prose-invert">
       <header className="mb-8 not-prose">
         <h1 className="text-3xl font-bold text-text">{post.title}</h1>
         <time className="mt-2 block text-sm text-muted">{dateStr}</time>

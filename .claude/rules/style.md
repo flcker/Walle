@@ -30,6 +30,15 @@
 - 水平内边距：`px-4`
 - 典型容器：`mx-auto flex max-w-3xl px-4`
 
+## 文章排版
+
+文章正文使用 `@tailwindcss/typography` 插件提供排版样式：
+
+- 文章页 `<article>` 固定使用 `prose prose-neutral max-w-none dark:prose-invert`
+- prose 颜色变量已在 `tailwind.config.ts` 中全部映射到语义 CSS 变量，**禁止**单独覆盖 prose 颜色
+- 暗色模式由 `dark:prose-invert` + `globals.css` 中的 `--tw-prose-invert-*` 变量处理，无需额外干预
+- 内联代码（`code`）样式：背景 `var(--color-surface)`，去除默认的前后引号
+
 ## 深色模式
 
 `globals.css` 通过 `@media (prefers-color-scheme: dark)` 自动切换色彩变量，组件无需手动处理深色模式，直接使用语义色彩类即可。

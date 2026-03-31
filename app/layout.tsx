@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "highlight.js/styles/github.css";
 import { siteConfig } from "@/src/core/config";
-import { ThemedNavbar } from "@/src/core/ThemeResolver";
+import { ThemedNavbar, ThemedFooter } from "@/src/core/ThemeResolver";
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -16,11 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen bg-background text-text antialiased">
+      <body className="min-h-screen flex flex-col bg-background text-text antialiased">
         <ThemedNavbar />
-        <main className="mx-auto max-w-3xl px-4 py-10">
+        <main className="mx-auto max-w-3xl px-4 py-10 flex-1 w-full">
           {children}
         </main>
+        <ThemedFooter />
       </body>
     </html>
   );

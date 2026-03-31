@@ -1,11 +1,13 @@
 import { getPaginatedPosts } from "@/src/core/lib/posts";
-import { ThemedPostCard, ThemedPagination } from "@/src/core/ThemeResolver";
+import { ThemedPostCard, ThemedPagination, ThemedProfile } from "@/src/core/ThemeResolver";
+import { siteConfig } from "@/src/core/config";
 
 export default async function HomePage() {
   const { posts, totalPages } = await getPaginatedPosts(1);
 
   return (
     <>
+      {(siteConfig.profile.show as string) === 'home-top' && <ThemedProfile />}
       <div>
         {posts.length === 0 ? (
           <p className="text-muted text-sm">暂无文章。</p>
@@ -25,6 +27,7 @@ export default async function HomePage() {
       </div>
 
       <ThemedPagination current={1} total={totalPages} basePath="/posts/page" />
+      {(siteConfig.profile.show as string) === 'home-bottom' && <ThemedProfile />}
     </>
   );
 }

@@ -8,6 +8,8 @@ Walle（瓦力）是基于 Next.js 14 的静态博客系统，专注于极简配
 - 所有站点配置集中在 `src/core/config.ts`，使用 `as const` 保证字面类型
 - **禁止**在组件内硬编码站点名称、功能开关等配置值，统一从 `siteConfig` 读取
 - 功能开关（`siteConfig.features.*`）控制 UI 元素的显示，组件内必须检查后再渲染
+- `siteConfig.profile.show` 控制个人信息模块的显示位置：`'header-banner'`（导航栏上方横幅）、`'header-inline'`（导航栏内嵌）、`'home-top'`（首页顶部卡片）、`'home-bottom'`（首页底部卡片）、`false`（不显示）
+- 头像等站点资源放在 `content/assets/`，配置中使用 `/assets/文件名` 格式的 public URL
 
 ### 类型定义
 - 所有跨文件共用类型定义在 `src/core/types/index.ts`
@@ -31,7 +33,8 @@ Walle（瓦力）是基于 Next.js 14 的静态博客系统，专注于极简配
 - 使用 Tailwind CSS 语义色彩类（`bg-background`、`text-primary`、`border-border` 等）
 - **禁止**使用 Tailwind 原始色值（`bg-gray-100`、`text-blue-500` 等），统一用 CSS 变量驱动
 - 布局约束：内容区最大宽度 `max-w-3xl`，水平内边距 `px-4`
-- 完整色彩表和交互状态规范见 `.claude/rules/style.md`
+- 文章正文排版使用 `@tailwindcss/typography`，`<article>` 固定类名 `prose prose-neutral max-w-none dark:prose-invert`
+- 完整色彩表、排版规范和交互状态规范见 `.claude/rules/style.md`
 
 ### 文章系统
 - 文章放在 `content/posts/` 目录，文件名即 slug，**不支持子目录**
@@ -40,12 +43,18 @@ Walle（瓦力）是基于 Next.js 14 的静态博客系统，专注于极简配
 - Frontmatter 规范、解析管线、数据访问函数列表见 `.claude/rules/content.md`
 
 ### 图片系统
-- 图片统一放在 `content/assets/`，**支持任意子目录**（如 `content/assets/2026/`）
-- Markdown 中使用相对路径引用：`![说明](../assets/图片名.png)`
+- 所有图片资源（文章图片、站点头像等）统一放在 `content/assets/`，**支持任意子目录**
 - `npm run build` 的 prebuild 阶段自动将 `content/assets/` 递归同步到 `public/assets/`
-- `rehypeAssetPath` 插件（`src/core/lib/posts.ts`）在构建时将 `../assets/` 规范化并补全 basePath
+- 本地 `npm run dev` 不自动同步，新增图片后需先执行 `npm run prebuild`
+
+**Markdown 文章图片**：
+- 使用相对路径引用：`![说明](../assets/图片名.png)`
+- `rehypeAssetPath` 插件在构建时将路径规范化并补全 basePath
 - **禁止**在 Markdown 中写 `/assets/` 绝对路径（编辑器无法预览）
-- 本地 `npm run dev` 不自动同步图片，新增图片后需先执行 `npm run prebuild`
+
+**站点资源（头像等）**：
+- 在 `siteConfig` 中使用 `/assets/文件名` 格式的 public URL（如 `profile.avatar: '/assets/avatar.svg'`）
+- 禁止使用 `content/assets/` 路径（该路径不在 public 目录下，浏览器无法访问）
 
 ## 开发命令
 
@@ -64,12 +73,15 @@ src/core/types/index.ts     # 所有共用 TypeScript 类型
 src/core/lib/posts.ts       # 文章解析 & 数据访问层（含 rehypeAssetPath 插件）
 src/core/ThemeResolver.tsx  # 主题组件动态加载注册表
 src/themes/base/            # 默认主题完整实现
+  ├── Navbar.tsx            #   导航栏（含 header-inline / header-banner Profile 模式）
+  ├── Footer.tsx            #   页脚（版权信息）
+  └── Profile.tsx           #   个人信息卡片（home-top / home-bottom 模式）
 app/                        # Next.js App Router 页面
 content/posts/              # Markdown 文章（平铺，不含子目录）
-content/assets/             # 文章图片（支持子目录，构建时同步到 public/assets/）
+content/assets/             # 图片资源（支持子目录，构建时同步到 public/assets/）
 scripts/                    # 构建脚本（搜索索引 + 图片同步）
 doc/Develop.md              # 完整开发文档（实现细节、技术决策）
-plan/Plan.md                # 分阶段执行计划
+plan/                       # 分阶段执行计划（每个功能独立文件，禁止覆盖）
 ```
 
 ## 规则文件
@@ -107,6 +119,8 @@ plan/Plan.md                # 分阶段执行计划
 | 分类列表 & 过滤页 | `app/categories/` | ✅ 完成 |
 | 标签列表 & 过滤页 | `app/tags/` | ✅ 完成 |
 | 文章图片支持 | `content/assets/` + `src/core/lib/posts.ts` | ✅ 完成 |
+| Footer（版权信息） | `app/layout.tsx` + `src/themes/base/Footer.tsx` | ✅ 完成 |
+| Profile 模块（个人信息 + 社交链接） | `src/themes/base/Profile.tsx` + `Navbar.tsx` | ✅ 完成 |
 
 ### 数据模型（当前版本）
 
@@ -125,6 +139,8 @@ plan/Plan.md                # 分阶段执行计划
 | `ThemedPagination` | `PaginationProps` | `Pagination.tsx` |
 | `ThemedTagList` | `TagListProps` | `TagList.tsx` |
 | `ThemedCategoryList` | `CategoryListProps` | `CategoryList.tsx` |
+| `ThemedFooter` | `FooterProps` | `Footer.tsx` |
+| `ThemedProfile` | `ProfileProps` | `Profile.tsx` |
 
 ### 路由结构（当前）
 
@@ -146,6 +162,15 @@ app/
         ├── page.tsx                      # 标签文章（第 1 页）
         └── page/[page]/page.tsx          # 标签文章分页
 ```
+
+### 配置速查（`siteConfig`）
+
+| 字段 | 说明 |
+|:---|:---|
+| `footer.copyright` | Footer 版权归属名 |
+| `profile.show` | Profile 显示位置（见配置管理节） |
+| `profile.avatar` | 头像 URL（`/assets/` 前缀） |
+| `profile.github` / `weibo` / `rss` | 社交链接，留空不显示 |
 
 ### 待开发（计划中）
 

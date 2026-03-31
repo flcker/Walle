@@ -50,3 +50,9 @@ export interface TagListProps {
 export interface CategoryListProps {
   categories: { name: string; count: number }[];
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FooterProps {}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ProfileProps {}

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!-- 背景圆，圆心 (40,40) -->
+  <circle cx="40" cy="40" r="40" fill="#f0f4ff"/>
+
+  <!-- 身体：y=16~52，水平居中 x=20~60 -->
+  <rect x="20" y="16" width="40" height="36" rx="6" fill="#2563eb"/>
+
+  <!-- 左眼：cx=32，cy=30 -->
+  <circle cx="32" cy="30" r="7" fill="white"/>
+  <circle cx="32" cy="30" r="3.5" fill="#1d4ed8"/>
+
+  <!-- 右眼：cx=48，cy=30 -->
+  <circle cx="48" cy="30" r="7" fill="white"/>
+  <circle cx="48" cy="30" r="3.5" fill="#1d4ed8"/>
+
+  <!-- 嘴巴：水平居中 x=30~50，y=44 -->
+  <rect x="30" y="44" width="20" height="4" rx="2" fill="white"/>
+
+  <!-- 履带：y=54~64，水平居中 x=16~64 -->
+  <rect x="16" y="54" width="48" height="10" rx="4" fill="#1d4ed8"/>
+</svg>

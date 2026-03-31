@@ -7,6 +7,8 @@ import type {
   PaginationProps,
   TagListProps,
   CategoryListProps,
+  FooterProps,
+  ProfileProps,
 } from "./types";
 
 const theme = siteConfig.theme;
@@ -62,5 +64,19 @@ export const ThemedCategoryList = dynamic<CategoryListProps>(
   () =>
     import(`../themes/${theme}/CategoryList`).catch(() =>
       import("../themes/base/CategoryList")
+    )
+);
+
+export const ThemedFooter = dynamic<FooterProps>(
+  () =>
+    import(`../themes/${theme}/Footer`).catch(() =>
+      import("../themes/base/Footer")
+    )
+);
+
+export const ThemedProfile = dynamic<ProfileProps>(
+  () =>
+    import(`../themes/${theme}/Profile`).catch(() =>
+      import("../themes/base/Profile")
     )
 );

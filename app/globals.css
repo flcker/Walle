@@ -39,6 +39,22 @@ body {
   }
 }
 
+/* ─── prose 暗色模式 ─────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .prose {
+    --tw-prose-invert-body:         var(--color-text);
+    --tw-prose-invert-headings:     var(--color-text);
+    --tw-prose-invert-links:        var(--color-primary);
+    --tw-prose-invert-bold:         var(--color-text);
+    --tw-prose-invert-code:         var(--color-text);
+    --tw-prose-invert-quotes:       var(--color-text-muted);
+    --tw-prose-invert-quote-borders: var(--color-border);
+    --tw-prose-invert-hr:           var(--color-border);
+    --tw-prose-invert-th-borders:   var(--color-border);
+    --tw-prose-invert-td-borders:   var(--color-border);
+  }
+}
+
 /* ─── 文章正文图片 ─────────────────────────────────────── */
 .prose img {
   max-width: 100%;
