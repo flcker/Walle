@@ -41,7 +41,25 @@
 
 ## 深色模式
 
-`globals.css` 通过 `@media (prefers-color-scheme: dark)` 自动切换色彩变量，组件无需手动处理深色模式，直接使用语义色彩类即可。
+- `globals.css` 的暗色变量块同时响应两个条件：`@media (prefers-color-scheme: dark)` 和 `[data-theme="dark"]` 属性选择器
+- `tailwind.config.ts` 使用 `darkMode: ['selector', '[data-theme="dark"]']`，`dark:` 前缀类（如 `dark:prose-invert`）随 `data-theme` 属性切换
+- 切换逻辑封装在 `src/core/lib/useTheme.ts`，**禁止**在组件中直接操作 `document.documentElement` 或 `localStorage`
+- 组件无需手动处理深色模式，直接使用语义色彩类（`bg-background`、`text-primary` 等）即可自动适配
+
+### 主题切换流程
+
+```
+页面加载（HTML/CSS，无 JS）
+  layout.tsx <head> 阻塞脚本 → 读 localStorage → 设置 data-theme
+  CSS 变量块响应 data-theme → 首次渲染主题正确（无 FOUC）
+
+React 水合后
+  NavbarClient → useTheme() → 读 localStorage → 设置 mounted=true → 渲染切换按钮
+
+用户点击切换
+  toggle() → setTheme() → useEffect → setAttribute('data-theme', ...) + localStorage
+  CSS 变量即时更新，无需重新渲染组件树
+```
 
 ## 响应式设计
 

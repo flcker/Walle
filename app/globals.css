@@ -15,7 +15,7 @@
 
 /* ─── 暗色主题 ─────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --color-background: #0f172a;
     --color-surface:    #1e293b;
     --color-border:     #334155;
@@ -24,6 +24,15 @@
     --color-text:       #f1f5f9;
     --color-text-muted: #94a3b8;
   }
+}
+[data-theme="dark"] {
+  --color-background: #0f172a;
+  --color-surface:    #1e293b;
+  --color-border:     #334155;
+  --color-primary:    #60a5fa;
+  --color-secondary:  #a78bfa;
+  --color-text:       #f1f5f9;
+  --color-text-muted: #94a3b8;
 }
 
 /* ─── 基础样式 ─────────────────────────────────────── */
@@ -41,7 +50,7 @@ body {
 
 /* ─── prose 暗色模式 ─────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
-  .prose {
+  :root:not([data-theme="light"]) .prose {
     --tw-prose-invert-body:         var(--color-text);
     --tw-prose-invert-headings:     var(--color-text);
     --tw-prose-invert-links:        var(--color-primary);
@@ -53,6 +62,18 @@ body {
     --tw-prose-invert-th-borders:   var(--color-border);
     --tw-prose-invert-td-borders:   var(--color-border);
   }
+}
+[data-theme="dark"] .prose {
+  --tw-prose-invert-body:         var(--color-text);
+  --tw-prose-invert-headings:     var(--color-text);
+  --tw-prose-invert-links:        var(--color-primary);
+  --tw-prose-invert-bold:         var(--color-text);
+  --tw-prose-invert-code:         var(--color-text);
+  --tw-prose-invert-quotes:       var(--color-text-muted);
+  --tw-prose-invert-quote-borders: var(--color-border);
+  --tw-prose-invert-hr:           var(--color-border);
+  --tw-prose-invert-th-borders:   var(--color-border);
+  --tw-prose-invert-td-borders:   var(--color-border);
 }
 
 /* ─── 文章正文图片 ─────────────────────────────────────── */

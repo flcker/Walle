@@ -14,6 +14,7 @@ export const siteConfig = {
   features: {
     search: true,
     calendar: true,
+    themeToggle: true,
   },
   footer: {
     copyright: 'Your Name',

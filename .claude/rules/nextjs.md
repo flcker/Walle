@@ -80,3 +80,15 @@ GitHub Pages 子路径部署时 `basePath` 由 CI 注入，本地开发不设置
 ## 图片处理
 
 `next/image` 已配置 `unoptimized: true`（静态导出限制），可正常使用 `<Image>` 组件。
+
+**站点资源（头像等）的 basePath 问题：** `unoptimized: true` 时 `<Image>` 不会自动给 `src` 加 basePath 前缀。`/assets/` 下的站点资源须通过 `assetUrl()` 处理：
+
+```tsx
+import { assetUrl } from "@/src/core/config";
+// ✅ 正确
+<Image src={assetUrl(profile.avatar)} ... />
+// ❌ 错误：在 GitHub Pages 子路径下会 404
+<Image src={profile.avatar} ... />
+```
+
+`assetUrl()` 读取 `NEXT_PUBLIC_BASE_PATH` 环境变量并拼接前缀，本地开发无 basePath 时行为不变。
