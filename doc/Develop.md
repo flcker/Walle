@@ -14,10 +14,22 @@
    - [Phase 3 — 视图层：Base 主题](#phase-3--视图层base-主题)
    - [Phase 4 — 运行时主题解析器与路由](#phase-4--运行时主题解析器与路由)
    - [Phase 5 — 搜索功能](#phase-5--搜索功能)
+   - [Phase 5.1 — GFM 扩展语法](#phase-51--gfm-扩展语法)
+   - [Phase 5.2 — Mermaid 图表支持](#phase-52--mermaid-图表支持)
+   - [Phase 5.3 — 图片支持](#phase-53--图片支持)
+   - [Phase 5.4 — 标签与分类功能](#phase-54--标签与分类功能)
+   - [Phase 5.5 — 日/夜模式切换](#phase-55--日夜模式切换)
+   - [Phase 5.6 — 配色方案运行时切换](#phase-56--配色方案运行时切换)
+   - [Phase 5.7 — Liquid Glass 主题](#phase-57--liquid-glass-主题)
+   - [Phase 5.8 — 代码高亮增强](#phase-58--代码高亮增强)
+   - [Phase 5.9 — Footer 与 Profile 模块](#phase-59--footer-与-profile-模块)
    - [Phase 6 — 自动化部署](#phase-6--自动化部署)
+   - [Phase 7 — 内容仓库分离（可选）](#phase-7--内容仓库分离可选)
 4. [关键技术决策记录](#4-关键技术决策记录)
 5. [自定义主题](#5-自定义主题)
 6. [部署方式](#6-部署方式)
+
+---
 
 ---
 
@@ -29,6 +41,18 @@ Walle/
 │   └── workflows/
 │       └── deploy.yml            # GitHub Actions 自动部署
 ├── app/                          # Next.js App Router 页面层
+│   ├── categories/
+│   │   ├── page.tsx              # 分类列表页
+│   │   └── [category]/
+│   │       ├── page.tsx          # 分类文章（第 1 页）
+│   │       └── page/[page]/
+│   │           └── page.tsx      # 分类文章分页
+│   ├── tags/
+│   │   ├── page.tsx              # 标签云页
+│   │   └── [tag]/
+│   │       ├── page.tsx          # 标签文章（第 1 页）
+│   │       └── page/[page]/
+│   │           └── page.tsx      # 标签文章分页
 │   ├── archives/
 │   │   └── page.tsx              # 归档页
 │   ├── posts/
@@ -41,7 +65,8 @@ Walle/
 │   ├── layout.tsx                # 全局 Layout（含 Navbar）
 │   └── page.tsx                  # 首页
 ├── content/
-│   └── posts/                    # Markdown 文章文件夹
+│   ├── posts/                    # Markdown 文章文件夹（平铺，不含子目录）
+│   └── assets/                   # 图片资源（支持任意子目录，构建时同步到 public/assets/）
 ├── public/
 │   └── search-index.json         # 构建时自动生成，勿手动修改
 ├── scripts/
@@ -61,11 +86,15 @@ Walle/
 │       ├── base/                 # 默认主题（完整实现）
 │       │   ├── ArchiveList.tsx
 │       │   ├── Calendar.tsx
+│       │   ├── CategoryList.tsx
+│       │   ├── Footer.tsx
 │       │   ├── Navbar.tsx
 │       │   ├── NavbarClient.tsx  # 搜索按钮（Client Component）
 │       │   ├── Pagination.tsx
 │       │   ├── PostCard.tsx
-│       │   └── SearchModal.tsx   # 搜索弹窗（Client Component）
+│       │   ├── Profile.tsx
+│       │   ├── SearchModal.tsx   # 搜索弹窗（Client Component）
+│       │   └── TagList.tsx
 │       ├── liquid-glass/         # Liquid Glass 主题（当前激活）
 │       │   ├── theme.css         # 结构 CSS（blob 动画 + 玻璃卡片结构，无颜色）
 │       │   ├── schemes/          # 配色方案
@@ -102,6 +131,8 @@ Walle/
 | `highlight.js` | 11.x | 代码高亮样式与语言支持 |
 | `fuse.js` | 7.x | 客户端模糊搜索 |
 | `date-fns` | 4.x | 日期格式化 |
+| `remark-gfm` | 4.x | GFM 扩展：删除线、任务列表、表格 |
+| `beautiful-mermaid` | latest | Node.js 同步渲染 Mermaid 图表为 SVG |
 
 ### 开发依赖
 
@@ -174,11 +205,14 @@ export type SiteConfig = typeof siteConfig;
 
 ```
 .md 文件
-  → gray-matter       提取 Frontmatter + 原始内容
-  → remark()          解析为 Markdown AST
-  → remark-rehype     转换为 HTML AST
-  → rehype-highlight  代码块添加高亮 class（构建时静态，无运行时 JS）
-  → rehype-stringify  序列化为 HTML 字符串
+  → gray-matter         提取 Frontmatter + 原始内容
+  → remark()            解析为 Markdown AST
+  → remark-gfm          GFM 扩展（删除线/任务列表/表格）
+  → remark-rehype       转换为 HTML AST
+  → rehypeMermaid       Mermaid 代码块渲染为内联 SVG（自定义插件）
+  → rehype-highlight    代码块添加高亮 class（构建时静态，无运行时 JS）
+  → rehypeAssetPath     规范化图片路径 + 补全 basePath（自定义插件）
+  → rehype-stringify    序列化为 HTML 字符串（allowDangerousHtml: true）
 ```
 
 #### 日期优先级策略
@@ -190,7 +224,7 @@ resolvePostDate(frontmatterDate, filePath)
   [可选扩展] Git commit 时间（需 fetch-depth: 0，见 Phase 7.3）
 ```
 
-#### 导出的五个函数
+#### 导出的数据访问函数
 
 | 函数 | 说明 |
 |:---|:---|
@@ -198,6 +232,10 @@ resolvePostDate(frontmatterDate, filePath)
 | `getPostBySlug(slug)` | 按 slug 查找单篇，不存在返回 `null` |
 | `getGroupedArchives()` | 按年份分组，年份降序 |
 | `getPaginatedPosts(page)` | 分页，读取 `siteConfig.postsPerPage` |
+| `getAllTags()` | 返回所有标签及文章数，按数量降序 |
+| `getAllCategories()` | 返回所有分类及文章数，按数量降序 |
+| `getPostsByTag(tag, page)` | 按标签过滤文章，支持分页 |
+| `getPostsByCategory(category, page)` | 按分类过滤文章，支持分页 |
 
 所有函数均为 `async`，仅在 Node.js 环境（构建时/Server Component）调用，不会打包进客户端 JS。
 
@@ -286,6 +324,42 @@ app/layout.tsx <head>
 
 liquid-glass 主题的每套 scheme.css 末尾额外追加了与该配色方案匹配的 `.hljs-*` token 颜色覆盖，注入优先级高于 `github.css`（内联 `<style>` 后置），因此代码块配色随当前 scheme 自动变化。
 
+#### GFM 元素样式
+
+删除线和表格由 `@tailwindcss/typography` 的 prose 样式内置支持，无需额外 CSS。
+
+任务列表的 checkbox 需要自定义样式（prose 默认隐藏 checkbox），追加到 `app/globals.css`：
+
+```css
+.contains-task-list { list-style: none; padding-left: 0; }
+.task-list-item { display: flex; align-items: flex-start; gap: 0.5rem; }
+.task-list-item input[type="checkbox"] {
+  margin-top: 0.25rem;
+  accent-color: var(--color-primary);
+  cursor: default;
+}
+```
+
+使用语义变量 `--color-primary` 驱动 checkbox 选中颜色，自动适配所有配色方案和亮/暗模式。
+
+#### Mermaid 图表样式
+
+`app/globals.css` 追加 `.mermaid-diagram` 样式块，控制图表容器和 SVG 内部颜色：
+
+```css
+.mermaid-diagram { width: fit-content; margin: 1.5em auto; }
+.mermaid-diagram svg {
+  --bg: var(--color-background) !important;
+  --fg: var(--color-text) !important;
+  --accent: var(--color-primary) !important;
+  --surface: var(--color-surface) !important;
+  --border: var(--color-border) !important;
+  --muted: var(--color-text-muted) !important;
+}
+```
+
+`beautiful-mermaid` 渲染 SVG 时在内部使用 `--bg`/`--fg`/`--accent` 等变量，通过上述映射绑定到项目语义色变量。浏览器运行时解析，单次渲染自动适配当前 scheme 和亮/暗模式组合，无需为每种变体分别生成 SVG。
+
 ---
 
 ### Phase 4 — 运行时主题解析器与路由
@@ -319,6 +393,12 @@ export const ThemedPostCard = dynamic<PostCardProps>(
 | `/archives` | `app/archives/page.tsx` | Static |
 | `/posts/[slug]` | `app/posts/[slug]/page.tsx` | SSG（`generateStaticParams`） |
 | `/posts/page/[page]` | `app/posts/page/[page]/page.tsx` | SSG（`generateStaticParams`） |
+| `/categories` | `app/categories/page.tsx` | Static |
+| `/categories/[category]` | `app/categories/[category]/page.tsx` | SSG（`generateStaticParams`） |
+| `/categories/[category]/page/[page]` | `app/categories/[category]/page/[page]/page.tsx` | SSG（`generateStaticParams`） |
+| `/tags` | `app/tags/page.tsx` | Static |
+| `/tags/[tag]` | `app/tags/[tag]/page.tsx` | SSG（`generateStaticParams`） |
+| `/tags/[tag]/page/[page]` | `app/tags/[tag]/page/[page]/page.tsx` | SSG（`generateStaticParams`） |
 
 首页（`/`）等价于第 1 页；`/posts/page/1` 也会生成，但实际上两者内容相同。分页器的 `prevHref` 在 `current === 2` 时指向 `/`（而非 `/posts/page/1`），保持 URL 简洁。
 
@@ -375,7 +455,222 @@ new Fuse(data, {
 
 ---
 
-### Phase 5.5 — 配色方案运行时切换
+### Phase 5.1 — GFM 扩展语法
+
+remark 默认不支持 GitHub Flavored Markdown，需显式启用 `remark-gfm` 插件。
+
+#### 注册插件
+
+```ts
+// src/core/lib/posts.ts
+import remarkGfm from "remark-gfm";
+
+// 在 remark-rehype 之前注册（GFM 扩展的是 Markdown AST 层）
+const processor = remark()
+  .use(remarkGfm)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  // ...
+```
+
+#### 支持的语法
+
+| 语法 | 示例 |
+|:---|:---|
+| 删除线 | `~~删除文本~~` |
+| 任务列表 | `- [x] 已完成` / `- [ ] 待办` |
+| 表格 | `\| 列1 \| 列2 \|` |
+
+任务列表的 CSS 样式见 [Phase 3 — GFM 元素样式](#gfm-元素样式)。
+
+---
+
+### Phase 5.2 — Mermaid 图表支持
+
+#### 选型理由
+
+官方 `mermaid.js` 依赖浏览器 DOM（`document`/`window`），在 Node.js 构建环境无法直接调用。`beautiful-mermaid` 纯 Node.js 同步渲染，零 DOM 依赖，与 `output: 'export'` 的构建时静态生成完全兼容。
+
+#### rehypeMermaid 自定义插件
+
+位于 `src/core/lib/posts.ts`，核心逻辑：
+
+1. 遍历 hast 树，找到 `pre > code.language-mermaid` 节点
+2. 提取代码内容，调用 `renderMermaidSVG(code)` 同步渲染
+3. 将整个 `<pre>` 替换为 `<div class="mermaid-diagram">` + raw SVG
+4. 渲染失败时 fallback：保留原始代码块（不中断构建）
+
+**插件顺序约束**：`rehypeMermaid` 必须在 `rehypeHighlight` **之前**注册——否则 highlight.js 会尝试对 mermaid 语法进行高亮，产生错误的输出。
+
+`rehypeStringify` 需配置 `allowDangerousHtml: true`，允许输出内联 SVG 的 raw HTML。
+
+#### 主题适配
+
+SVG 内部颜色通过 CSS 变量映射自动适配，见 [Phase 3 — Mermaid 图表样式](#mermaid-图表样式)。
+
+---
+
+### Phase 5.3 — 图片支持
+
+#### 目录约定
+
+| 目录 | 用途 | 说明 |
+|:---|:---|:---|
+| `content/assets/` | 文章图片资源 | 支持任意子目录 |
+| `content/posts/` | Markdown 文章 | 平铺，不含子目录 |
+| `public/assets/` | 构建输出 | 由 prebuild 自动同步，勿手动修改 |
+
+#### Markdown 写法
+
+文章内引用图片使用**相对路径**：
+
+```markdown
+![图片说明](../assets/图片名.png)
+![子目录图片](../assets/screenshots/demo.png)
+```
+
+相对路径基于 `content/posts/` 目录定位，VS Code、Typora、Obsidian 等编辑器本地预览时可正确解析。
+
+#### rehypeAssetPath 自定义插件
+
+构建时由 `src/core/lib/posts.ts` 中的 `rehypeAssetPath` 插件处理：
+
+1. 遍历 hast 树中的 `<img>` 节点
+2. 仅处理 `../assets/` 开头的路径（外部链接 `https://` 不受影响）
+3. 规范化为 `/assets/<相对路径>`
+4. 读取 `process.env.NEXT_PUBLIC_BASE_PATH` 补全前缀（GitHub Pages 子路径场景）
+
+#### 构建脚本同步
+
+`scripts/build-search-index.ts` 末尾追加：
+
+```ts
+fs.cpSync(assetsDir, publicAssetsDir, { recursive: true });
+```
+
+`npm run prebuild` 执行时自动将 `content/assets/` 递归同步到 `public/assets/`。
+
+#### 开发工作流注意事项
+
+`npm run dev` 不触发 prebuild，新增图片后需先执行：
+
+```bash
+npm run prebuild
+```
+
+---
+
+### Phase 5.4 — 标签与分类功能
+
+#### 数据层变更
+
+**`Post` 接口**新增 `category: string` 字段（空字符串表示未分类）。
+
+**`SearchIndexItem`** 同步新增 `category: string`，`scripts/build-search-index.ts` 对应更新。
+
+Frontmatter 新增可选字段：
+
+```markdown
+---
+category: 技术    # 单个分类，空字符串或不填表示未分类
+tags: [tag1, tag2]
+---
+```
+
+#### 组件注册
+
+`src/core/ThemeResolver.tsx` 新增两个 Themed 组件：
+
+```ts
+export const ThemedTagList = dynamic<TagListProps>(
+  () => import(`../themes/${theme}/TagList`).catch(() => import("../themes/base/TagList"))
+);
+export const ThemedCategoryList = dynamic<CategoryListProps>(
+  () => import(`../themes/${theme}/CategoryList`).catch(() => import("../themes/base/CategoryList"))
+);
+```
+
+#### 路由页面
+
+新增 8 个路由页面，均实现 `generateStaticParams()` 预生成所有路径：
+
+```
+app/categories/page.tsx                              # 分类列表
+app/categories/[category]/page.tsx                   # 分类文章第 1 页
+app/categories/[category]/page/[page]/page.tsx       # 分类文章分页
+app/tags/page.tsx                                    # 标签云
+app/tags/[tag]/page.tsx                              # 标签文章第 1 页
+app/tags/[tag]/page/[page]/page.tsx                  # 标签文章分页
+```
+
+**导航栏**：`base/Navbar.tsx` 在归档链接后新增"分类"和"标签"入口。
+
+#### URL 编码策略
+
+标签/分类名支持中文，`generateStaticParams` 使用 `encodeURIComponent` 生成路径参数，页面内用 `decodeURIComponent` 还原后再查询数据：
+
+```ts
+// generateStaticParams
+return categories.map(({ name }) => ({ category: encodeURIComponent(name) }));
+
+// 页面组件
+const categoryName = decodeURIComponent(params.category);
+const posts = await getPostsByCategory(categoryName, 1);
+```
+
+分页器的 `basePath` 传入已编码的路径（如 `/tags/%E6%8A%80%E6%9C%AF/page`），保证链接正确。
+
+---
+
+### Phase 5.5 — 日/夜模式切换
+
+#### 配置开关
+
+`siteConfig.features.themeToggle: true` 控制切换按钮是否显示。
+
+#### useTheme Hook
+
+`src/core/lib/useTheme.ts` 封装主题切换逻辑：
+
+| 状态 | 说明 |
+|:---|:---|
+| 无 `data-theme` + 系统暗色偏好 | 呈现暗色 |
+| `data-theme="dark"` | 强制暗色 |
+| `data-theme="light"` | 强制亮色 |
+
+Hook 使用 `mounted` flag 防止 SSR 与客户端不一致（水合前返回默认值，水合后读 localStorage）。
+
+#### tailwind.config.ts 配置
+
+```ts
+darkMode: ['selector', '[data-theme="dark"]'],
+```
+
+使 `dark:prose-invert` 等 Tailwind `dark:` 前缀类随 `data-theme` 属性切换（而非仅响应系统偏好）。
+
+#### 防 FOUC
+
+`app/layout.tsx` 在 `<head>` 中注入阻塞内联脚本，React 水合前同步设置 `data-theme`：
+
+```html
+<script dangerouslySetInnerHTML={{ __html: `
+  (function() {
+    var t = localStorage.getItem('theme');
+    if (t === 'dark' || t === 'light') {
+      document.documentElement.setAttribute('data-theme', t);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+` }} />
+```
+
+#### 切换按钮 UI
+
+`src/themes/base/NavbarClient.tsx` 在 `mounted=true` 后渲染切换按钮（防止 SSR/客户端图标不一致），使用月亮/太阳 SVG 图标，`onClick` 调用 `toggle()`。
+
+---
+
+### Phase 5.6 — 配色方案运行时切换
 
 liquid-glass 主题支持在页面上实时切换配色方案（aurora / sunset / ocean / rose），无需刷新页面。
 
@@ -421,6 +716,143 @@ document.documentElement.setAttribute('data-color-scheme', cs);
 配色方案切换 UI 属于 liquid-glass 主题的特性，放在 `src/themes/liquid-glass/NavbarClient.tsx`（而非 `base/NavbarClient.tsx`），保证 base 主题不感知此功能，其他主题可各自实现或不实现配色切换。
 
 `liquid-glass/Navbar.tsx` 导入自己的 `./NavbarClient`，base 的 `Navbar.tsx` 仍导入 `./NavbarClient`（base 版本）。
+
+防 FOUC 脚本中，`data-color-scheme` 初始化与 `data-theme` 初始化合并在同一个内联脚本块中：
+
+```ts
+var cs = localStorage.getItem('color-scheme') || '${defaultColorScheme}';
+document.documentElement.setAttribute('data-color-scheme', cs);
+```
+
+`siteConfig.themeOptions.colorSchemes` 数组（如 `['aurora', 'sunset', 'ocean', 'rose']`）供切换 UI 遍历，展示所有可选方案。
+
+---
+
+### Phase 5.7 — Liquid Glass 主题
+
+#### 架构设计
+
+主题内容完全自包含于 `src/themes/liquid-glass/`，激活只需修改 `config.ts` 的 `theme: 'liquid-glass'`，不需要改动 `app/` 目录任何文件。
+
+`theme.css`（结构 CSS）与 `schemes/*.css`（配色方案）分离设计：
+
+| 文件 | 内容 |
+|:---|:---|
+| `theme.css` | blob 动画关键帧、玻璃卡片 `backdrop-filter`、`border-radius` 等结构属性（不含颜色） |
+| `schemes/*.css` | 颜色变量 + Blob 颜色 + 卡片背景 + 代码高亮 token 颜色覆盖 |
+
+所有配色方案共享 `theme.css`，颜色变量各自独立，可按需增减方案而无需修改结构。
+
+#### 四套配色方案
+
+| 方案 | 亮色主色 | 暗色主色 | Blob 色系 |
+|:---|:---|:---|:---|
+| `aurora` | `#4f46e5` | `#818cf8` | 靛蓝 + 紫 + 青 |
+| `sunset` | `#ea580c` | `#fb923c` | 橙 + 玫红 + 金 |
+| `ocean` | `#0891b2` | `#22d3ee` | 青 + 蓝绿 + 天蓝 |
+| `rose` | `#e11d48` | `#fb7185` | 玫红 + 粉 + 紫 |
+
+#### ThemeGlobalStyles 加载顺序
+
+`src/core/ThemeGlobalStyles.tsx` 注入 CSS 时：
+
+1. 遍历 `schemes/` 目录，按文件名排序，逐个读取所有 scheme CSS 文件
+2. 追加 `theme.css`（结构 CSS 后置，确保覆盖 scheme 中可能的同名声明）
+3. 合并为单个 `<style>` 内联注入到 `<head>`
+
+**关键**：scheme CSS 先注入（提供颜色变量），`theme.css` 后注入（提供结构类）。
+
+#### 主题特有组件
+
+| 组件 | 说明 |
+|:---|:---|
+| `Footer.tsx` | 液态玻璃风格页脚 |
+| `Profile.tsx` | 玻璃卡片个人信息模块 |
+| `NavbarClient.tsx` | 集成配色方案切换 + 日/夜切换 + 搜索（三合一客户端控件） |
+
+---
+
+### Phase 5.8 — 代码高亮增强
+
+代码块高亮采用三层 CSS 覆盖策略，保证在任意主题、任意配色方案、亮/暗模式下均有合适的配色。
+
+#### 三层覆盖结构
+
+| 层次 | 位置 | 作用 | 禁止操作 |
+|:---|:---|:---|:---|
+| 1（底层）| `app/layout.tsx` import `github.css` | 所有主题的亮色兜底 | **禁止删除或替换** |
+| 2（中层）| `app/globals.css` 末尾 | base/无 scheme 主题的暗色保障 | — |
+| 3（顶层）| `schemes/*.css` 末尾 | liquid-glass 各配色方案专属 token 颜色 | — |
+
+第 3 层以内联 `<style>` 形式注入，优先级高于 bundle CSS，覆盖第 1 层的 `github.css`。
+
+#### 第 2 层：globals.css 暗色兜底
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hljs { background: #161b22; color: #c9d1d9; }
+}
+[data-theme="dark"] .hljs { background: #161b22; color: #c9d1d9; }
+```
+
+github-dark 风格，兼容系统偏好和手动切换两种暗色触发方式。
+
+#### 第 3 层：scheme 专属 token 颜色
+
+每套 scheme CSS 末尾追加的高亮规则选择器结构：
+
+```css
+/* 亮色 */
+html[data-color-scheme="aurora"] .hljs-keyword { color: #6366f1; }
+
+/* 暗色（系统偏好） */
+@media (prefers-color-scheme: dark) {
+  html[data-color-scheme="aurora"]:not([data-theme="light"]) .hljs-keyword { color: #a5b4fc; }
+}
+/* 暗色（手动切换） */
+html[data-color-scheme="aurora"][data-theme="dark"] .hljs-keyword { color: #a5b4fc; }
+```
+
+代码块配色随当前配色方案和亮/暗模式自动变化，无需 JavaScript 干预。
+
+---
+
+### Phase 5.9 — Footer 与 Profile 模块
+
+#### Footer
+
+**配置**：`siteConfig.footer.copyright` 字段，版权归属名。
+
+**组件**：`src/themes/base/Footer.tsx` 渲染：
+
+```
+© {当前年份} {copyright} · Powered by Walle
+```
+
+使用 `text-muted text-sm` 语义类，顶部 `border-border` 分割线。
+
+**粘底布局**：`app/layout.tsx` 修改为 `flex flex-col`，`<main>` 加 `flex-1`，`<ThemedFooter />` 置于 `main` 之后——短页面时 main 自动拉伸，Footer 始终位于视口底部。
+
+#### Profile 显示模式
+
+`siteConfig.profile.show` 支持 5 种取值：
+
+| 值 | 显示位置 | 说明 |
+|:---|:---|:---|
+| `false` | 不显示 | Profile 完全不渲染 |
+| `'home-top'` | 首页顶部 | `app/page.tsx` 条件渲染 `<ThemedProfile />`（仅首页第 1 页） |
+| `'home-bottom'` | 首页底部 | 同上，位置在文章列表之后 |
+| `'header-inline'` | 导航栏内嵌 | Navbar 左侧嵌入头像 + 名字 + 简介（随导航栏 sticky） |
+| `'header-banner'` | 导航栏上方横幅 | 独立横幅区域（非 sticky）+ 下方 sticky 导航栏 |
+
+**`base/Navbar.tsx`** 内部根据 `siteConfig.profile.show` 选择渲染路径：`header-inline` 和 `header-banner` 由 Navbar 直接处理，`home-*` 和 `false` 由 Navbar 之外的页面层处理。
+
+**头像资源**：放 `content/assets/`，prebuild 同步到 `public/assets/`，`siteConfig.profile.avatar` 配置 `/assets/avatar.svg` 格式的 public URL。组件内通过 `assetUrl()` 处理 basePath：
+
+```tsx
+import { assetUrl } from "@/src/core/config";
+<Image src={assetUrl(profile.avatar)} alt={profile.name} ... />
+```
 
 ---
 
@@ -469,6 +901,60 @@ checkout (fetch-depth: 0)
 
 ---
 
+### Phase 7 — 内容仓库分离（可选）
+
+适用于文章编写者与代码开发者分离，或希望文章更新不触发代码 CI 的场景。
+
+#### 仓库角色
+
+| 仓库 | 职责 |
+|:---|:---|
+| `blog-code`（公开） | Walle 代码库，不含文章 |
+| `blog-content`（可私有） | 纯 Markdown 文章 + `content/assets/` |
+
+#### 触发链路
+
+```
+blog-content push（main 分支）
+  → .github/workflows/notify.yml
+  → curl 触发 blog-code 的 repository_dispatch（event: content-updated）
+  → blog-code .github/workflows/deploy.yml
+  → npm run build（clone blog-content 到 content/ 后执行）
+  → GitHub Pages 更新
+```
+
+#### 关键配置
+
+**blog-content 仓库**：创建 `.github/workflows/notify.yml`，Push 时发送 `repository_dispatch` 请求。
+
+**GitHub PAT（Fine-grained Token）**：
+- 权限范围：`blog-code` 仓库的 `Actions: write`
+- 存入 `blog-content` 仓库 Secrets，变量名 `BLOG_CODE_DISPATCH_TOKEN`
+
+**blog-code `deploy.yml` 更新**：
+
+```yaml
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [content-updated]
+```
+
+构建步骤中在 `npm run build` 之前 clone content 仓库：
+
+```yaml
+- name: Clone content
+  run: |
+    git clone https://x-access-token:${{ secrets.CONTENT_REPO_TOKEN }}@github.com/user/blog-content.git _content
+    cp -r _content/posts ./content/
+    cp -r _content/assets ./content/
+```
+
+私有内容仓库需要在 `blog-code` 仓库 Secrets 中额外添加 `CONTENT_REPO_TOKEN`（对 `blog-content` 有读取权限的 PAT）。
+
+---
+
 ## 4. 关键技术决策记录
 
 ### 为什么用 `config.ts` 而非 `config.yaml`？
@@ -490,6 +976,26 @@ Next.js App Router 中，Server Component 不能包含 `useState` 等客户端 H
 - 不支持 API Routes（`app/api/`）
 - 不支持 Next.js Image Optimization（已设置 `unoptimized: true`）
 - `next/dynamic` 的动态导入在构建时会被静态打包，切换主题需要重新构建
+
+### 为什么用 `beautiful-mermaid` 而非官方 `mermaid.js`？
+
+官方 `mermaid.js` 依赖浏览器 DOM（`document`/`window`），在 Node.js 构建环境中无法直接调用，需要引入 `puppeteer` 或 `@mermaid-js/mermaid-isomorphic` 等重量级适配层。`beautiful-mermaid` 纯 Node.js 同步渲染，零 DOM 依赖，与 `output: 'export'` 的构建时静态生成完全兼容，且无需额外的浏览器运行时。
+
+### 为什么 Mermaid SVG 用 CSS 变量映射而非渲染多套 SVG？
+
+每种配色方案 × 亮/暗模式 = 8 种颜色变体，构建时无法预知用户当前处于哪种状态。CSS 变量映射方案：SVG 内部使用 `--bg`/`--fg`/`--accent` 等变量，由浏览器运行时根据当前 `data-color-scheme` 和 `data-theme` 属性解析，单次渲染自动适配所有组合，构建产物体积不随方案数量增长。
+
+### 为什么图片用相对路径 `../assets/` 而非 `/assets/` 绝对路径？
+
+相对路径让 VS Code、Typora、Obsidian 等本地编辑器在预览时能正确解析图片（相对于 `content/posts/` 定位到 `content/assets/`）；绝对路径在编辑器中预览必然 404（编辑器没有 public 目录的概念）。构建时由 `rehypeAssetPath` 插件统一转换为绝对路径并补全 basePath，开发体验与构建结果两端均兼容。
+
+### 为什么标签/分类 URL 用 `encodeURIComponent` 而非 slug 化？
+
+`encodeURIComponent("技术")` → `%E6%8A%80%E6%9C%AF`，Next.js 的 `generateStaticParams` 以此为参数名生成静态文件，`decodeURIComponent` 在页面内还原为原始名称再查询数据。相比转拼音 slug 化：不损失语义（"技术" vs "ji-shu"）、无需引入 `pinyin` 等额外依赖，且 GitHub Pages 完整支持 percent-encoded URL。
+
+### 为什么 Footer 用 `flex flex-col` + `flex-1 on main` 而非 `min-h-screen`？
+
+`min-h-screen` 只保证 body 的最小高度等于视口高度，短页面时 Footer 会紧贴 main 内容底部而非停在视口底部。`body: flex flex-col` + `main: flex-1` 让 main 区域自动拉伸填满 body 中剩余的所有空间，Footer 因此始终被推到视口底部，短内容和长内容页面均表现正确。
 
 ---
 
@@ -626,6 +1132,7 @@ npx serve out     # 本地静态服务器预览
 title: 我的新文章
 date: 2026-03-24
 summary: 文章摘要（可选）
+category: 技术        # 可选，单个分类，空字符串或不填表示未分类
 tags: [tag1, tag2]
 ---
 
