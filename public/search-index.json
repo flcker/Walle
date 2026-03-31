@@ -1,1 +1,1 @@
-[{"slug":"hello-walle","title":"欢迎使用 Walle 博客系统","date":"2026-03-31T00:00:00.000Z","tags":["walle","介绍"],"category":"介绍","summary":"Walle（瓦力）是一个极简静态博客系统，开箱即用，专注于写作本身。"}]
+[{"slug":"hello-walle","title":"欢迎使用 Walle 博客系统","date":"2026-03-31T00:00:00.000Z","tags":["walle","介绍"],"category":"介绍","summary":"Walle（瓦力）是一个极简静态博客系统，开箱即用，专注于写作本身。"},{"slug":"walle-1.0-release","title":"Walle 1.0 发布","date":"2026-03-31T00:00:00.000Z","tags":["walle","release"],"category":"公告","summary":"Walle 是基于 Next.js 14 的静态博客系统，专注于极简配置、主题自由和开箱即用。1.0 版本完整实现了从内容解析、主题系统到自动化部署的全套功能。"}]

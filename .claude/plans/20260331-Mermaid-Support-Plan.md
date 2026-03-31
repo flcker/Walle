@@ -73,3 +73,29 @@ npm install beautiful-mermaid
 ## 状态
 
 已完成（2026-03-31）
+
+---
+
+## Bugfix — ESM/CJS 兼容性（2026-03-31）
+
+### 问题
+
+CI 构建在 `prebuild` 阶段报错：
+
+```
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in
+.../node_modules/beautiful-mermaid/package.json
+```
+
+### 根因
+
+`beautiful-mermaid` v1.1.3 是 ESM-only 包，`exports` 只有 `"bun"` 和 `"import"` 条件，没有 `"require"` 条件。`tsx` 在 CJS 模式下将静态 `import` 语句转译为 `require()`，Node.js 找不到匹配的导出条件，在模块加载时即崩溃。
+
+### 修复
+
+**文件**：`src/core/lib/posts.ts`
+
+1. 删除顶层静态 `import { renderMermaidSVG } from 'beautiful-mermaid'`
+2. `rehypeMermaid` transformer 改为 `async`，内部改用 `await import('beautiful-mermaid')` 懒加载
+
+动态 `import()` 始终以 ESM 方式解析，即使调用方处于 CJS 上下文，因此正确匹配包的 `"import"` 导出条件。额外优化：无 mermaid 节点时提前返回，完全跳过 import。

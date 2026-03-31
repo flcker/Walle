@@ -494,10 +494,13 @@ const processor = remark()
 
 位于 `src/core/lib/posts.ts`，核心逻辑：
 
-1. 遍历 hast 树，找到 `pre > code.language-mermaid` 节点
-2. 提取代码内容，调用 `renderMermaidSVG(code)` 同步渲染
-3. 将整个 `<pre>` 替换为 `<div class="mermaid-diagram">` + raw SVG
-4. 渲染失败时 fallback：保留原始代码块（不中断构建）
+1. 遍历 hast 树，找到 `pre > code.language-mermaid` 节点（同步 `visit()`）
+2. 无 mermaid 节点时提前返回，跳过 import
+3. 通过 `await import('beautiful-mermaid')` 懒加载模块，调用 `renderMermaidSVG(code)` 渲染
+4. 将整个 `<pre>` 替换为 `<div class="mermaid-diagram">` + raw SVG
+5. 渲染失败时 fallback：保留原始代码块（不中断构建）
+
+**ESM/CJS 兼容**：`beautiful-mermaid` 是 ESM-only 包（仅有 `import` 导出条件，无 `require`）。`prebuild` 阶段 `tsx` 在 CJS 模式下运行，静态 `import` 会被转译为 `require()` 从而触发 `ERR_PACKAGE_PATH_NOT_EXPORTED`。改用动态 `await import()` 后，Node.js 始终以 ESM 方式解析，绕开此问题。transformer 声明为 `async` 函数，`unified` pipeline 原生支持 async transformer。
 
 **插件顺序约束**：`rehypeMermaid` 必须在 `rehypeHighlight` **之前**注册——否则 highlight.js 会尝试对 mermaid 语法进行高亮，产生错误的输出。
 

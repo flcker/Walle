@@ -8,7 +8,6 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Element } from 'hast';
-import { renderMermaidSVG } from 'beautiful-mermaid';
 import { siteConfig } from '../config';
 import type { Post, GroupedArchive } from '../types';
 
@@ -30,23 +29,32 @@ function resolvePostDate(frontmatterDate: unknown, filePath: string): Date {
 
 // rehype 插件：将 mermaid 代码块渲染为内联 SVG
 function rehypeMermaid() {
-  return () => (tree: Root) => {
+  return () => async (tree: Root) => {
+    // 先同步收集所有 mermaid 节点（visit 是同步的）
+    const mermaidNodes: { node: Element; index: number; parent: Element }[] = [];
     visit(tree, 'element', (node, index, parent) => {
       const el = node as Element;
       if (el.tagName !== 'pre' || !parent || index == null) return;
-
       const code = el.children[0] as Element;
       if (
         code?.tagName !== 'code' ||
         !String(code.properties?.className ?? '').includes('language-mermaid')
       ) return;
+      mermaidNodes.push({ node: el, index, parent: parent as Element });
+    });
 
-      // 提取代码文本
+    if (mermaidNodes.length === 0) return;
+
+    // 使用动态 import() 而非静态 import，确保在 tsx（CJS 模式）运行时也能正确解析
+    // ESM-only 包的 `import` 导出条件，避免 ERR_PACKAGE_PATH_NOT_EXPORTED。
+    const { renderMermaidSVG } = await import('beautiful-mermaid');
+
+    for (const { node, index, parent } of mermaidNodes) {
+      const code = node.children[0] as Element;
       const text = code.children
         .filter((c) => c.type === 'text')
         .map((c) => (c as { value: string }).value)
         .join('');
-
       try {
         const svg = renderMermaidSVG(text, { transparent: true, padding: 24 });
         const wrapper: Element = {
@@ -55,11 +63,11 @@ function rehypeMermaid() {
           properties: { className: ['mermaid-diagram'] },
           children: [{ type: 'raw', value: svg } as never],
         };
-        (parent as Element).children.splice(index, 1, wrapper);
+        parent.children.splice(index, 1, wrapper);
       } catch {
         // fallback：保留原始代码块
       }
-    });
+    }
   };
 }
 

@@ -75,4 +75,4 @@ tags: [hello]
 正文内容...
 ```
 
-详细文档见 [doc/Develop.md](https://github.com/liujiankang2/Walle/blob/main/doc/Develop.md)。
+详细文档见 [doc/Develop.md](https://github.com/flcker/Walle/blob/main/doc/Develop.md)。
