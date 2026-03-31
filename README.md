@@ -136,4 +136,4 @@ export const siteConfig = {
 
 ## 许可证
 
-MIT
+[MIT License](./LICENSE) © 2026 flcker
