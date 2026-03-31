@@ -77,7 +77,7 @@ Walle/
 ├── scripts/
 │   └── build-search-index.ts             # 搜索索引生成 + 图片资源同步
 ├── doc/Develop.md                        # 开发文档（实现细节、技术决策）
-├── plan/                                 # 功能计划文档（YYYYMMDD-功能名-Plan.md）
+├── .claude/plans/                        # 功能计划文档（YYYYMMDD-功能名-Plan.md）
 ├── next.config.mjs                       # Next.js 配置（SSG + basePath）
 └── .github/workflows/deploy.yml         # GitHub Pages 自动部署
 ```
@@ -131,8 +131,8 @@ export const siteConfig = {
 | 文件 | 说明 |
 |:---|:---|
 | `doc/Develop.md` | 开发文档，包含完整实现步骤、关键技术决策记录和部署方式说明 |
-| `plan/Plan.md` | 分阶段 AI 执行计划，每个 Phase 包含可直接使用的指令块与验收标准 |
-| `plan/statics blog technical plan.md` | 系统技术方案原始设计文档，记录架构设计思路与可行性分析 |
+| `.claude/plans/` | 分阶段 AI 执行计划文档（YYYYMMDD-功能名-Plan.md），每个 Phase 包含可直接使用的指令块与验收标准 |
+| `.claude/plans/statics blog technical plan.md` | 系统技术方案原始设计文档，记录架构设计思路与可行性分析 |
 
 ## 许可证
 
