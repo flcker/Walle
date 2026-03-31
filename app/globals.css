@@ -166,4 +166,62 @@ body {
 [data-theme="dark"] .hljs-section { color: #1f6feb; font-weight: bold; }
 [data-theme="dark"] .hljs-bullet { color: #f2cc60; }
 [data-theme="dark"] .hljs-addition { color: #aff5b4; background-color: #033a16; }
+
+/* ── GFM 任务列表 ─────────────────────────────── */
+.prose .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+.prose .task-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding-left: 0;
+}
+.prose .task-list-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1em;
+  height: 1em;
+  border: 1.5px solid var(--color-border);
+  border-radius: 0.2em;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  top: 0.1em;
+  cursor: default;
+}
+.prose .task-list-item input[type="checkbox"]:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.prose .task-list-item input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
 [data-theme="dark"] .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
+
+/* ── Mermaid 图表 ─────────────────────────────── */
+.mermaid-diagram {
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1.5em auto;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: var(--color-surface);
+}
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+  /* 将 beautiful-mermaid 内部 CSS 变量映射到项目语义色彩，自动适配所有 scheme 和亮/暗模式 */
+  --bg:      var(--color-surface) !important;
+  --fg:      var(--color-text) !important;
+  --accent:  var(--color-primary) !important;
+  --surface: var(--color-background) !important;
+  --border:  var(--color-border) !important;
+  --muted:   var(--color-text-muted) !important;
+}

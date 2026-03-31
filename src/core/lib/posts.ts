@@ -2,11 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
+import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Element } from 'hast';
+import { renderMermaidSVG } from 'beautiful-mermaid';
 import { siteConfig } from '../config';
 import type { Post, GroupedArchive } from '../types';
 
@@ -24,6 +26,41 @@ function resolvePostDate(frontmatterDate: unknown, filePath: string): Date {
     if (!isNaN(d.getTime())) return d;
   }
   return fs.statSync(filePath).mtime;
+}
+
+// rehype 插件：将 mermaid 代码块渲染为内联 SVG
+function rehypeMermaid() {
+  return () => (tree: Root) => {
+    visit(tree, 'element', (node, index, parent) => {
+      const el = node as Element;
+      if (el.tagName !== 'pre' || !parent || index == null) return;
+
+      const code = el.children[0] as Element;
+      if (
+        code?.tagName !== 'code' ||
+        !String(code.properties?.className ?? '').includes('language-mermaid')
+      ) return;
+
+      // 提取代码文本
+      const text = code.children
+        .filter((c) => c.type === 'text')
+        .map((c) => (c as { value: string }).value)
+        .join('');
+
+      try {
+        const svg = renderMermaidSVG(text, { transparent: true, padding: 24 });
+        const wrapper: Element = {
+          type: 'element',
+          tagName: 'div',
+          properties: { className: ['mermaid-diagram'] },
+          children: [{ type: 'raw', value: svg } as never],
+        };
+        (parent as Element).children.splice(index, 1, wrapper);
+      } catch {
+        // fallback：保留原始代码块
+      }
+    });
+  };
 }
 
 // rehype 插件：将相对路径图片统一规范化为绝对路径，并补全 basePath
@@ -54,10 +91,12 @@ function rehypeAssetPath(basePath: string) {
 async function markdownToHtml(content: string): Promise<string> {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const result = await remark()
+    .use(remarkGfm)
     .use(remarkRehype)
+    .use(rehypeMermaid())
     .use(rehypeHighlight)
     .use(rehypeAssetPath(basePath))
-    .use(rehypeStringify)
+    .use(rehypeStringify, { allowDangerousHtml: true })
     .process(content);
   return result.toString();
 }
