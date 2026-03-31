@@ -1,3 +1,10 @@
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+/** 将 /assets/... 路径转换为带 basePath 前缀的完整 URL */
+export function assetUrl(path: string): string {
+  return `${basePath}${path}`;
+}
+
 export const siteConfig = {
   title: 'Walle Blog',
   description: '一个简洁的静态博客',

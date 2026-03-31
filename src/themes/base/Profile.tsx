@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { siteConfig } from "@/src/core/config";
+import { siteConfig, assetUrl } from "@/src/core/config";
 
 export default function Profile() {
   const { name, bio, avatar, github, weibo, rss } = siteConfig.profile;
@@ -9,7 +9,7 @@ export default function Profile() {
     <div className="flex items-center gap-5 rounded-lg border border-border bg-surface p-5 mb-8">
       {avatar && (
         <Image
-          src={avatar}
+          src={assetUrl(avatar)}
           alt={name}
           width={64}
           height={64}

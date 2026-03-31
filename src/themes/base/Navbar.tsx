@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { siteConfig } from "@/src/core/config";
+import { siteConfig, assetUrl } from "@/src/core/config";
 import NavbarClient from "./NavbarClient";
 
 const { profile } = siteConfig;
@@ -43,7 +43,7 @@ function NavbarInline() {
       <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-2">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80">
           {profile.avatar && (
-            <Image src={profile.avatar} alt={profile.name} width={36} height={36}
+            <Image src={assetUrl(profile.avatar)} alt={profile.name} width={36} height={36}
                    className="rounded-full object-cover shrink-0" />
           )}
           <div>
@@ -69,7 +69,7 @@ function NavbarBanner() {
       <div className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-3xl items-center gap-5 px-4 py-5">
           {profile.avatar && (
-            <Image src={profile.avatar} alt={profile.name} width={64} height={64}
+            <Image src={assetUrl(profile.avatar)} alt={profile.name} width={64} height={64}
                    className="rounded-full object-cover shrink-0" />
           )}
           <div>
