@@ -50,6 +50,7 @@ Walle/
 │   ├── core/
 │   │   ├── config.ts             # 全局配置（唯一配置入口）
 │   │   ├── ThemeResolver.tsx     # 运行时主题加载器
+│   │   ├── ThemeGlobalStyles.tsx # 主题 CSS 注入（Server Component）
 │   │   ├── lib/
 │   │   │   └── posts.ts          # 文章解析与数据函数
 │   │   └── types/
@@ -63,6 +64,17 @@ Walle/
 │       │   ├── Pagination.tsx
 │       │   ├── PostCard.tsx
 │       │   └── SearchModal.tsx   # 搜索弹窗（Client Component）
+│       ├── liquid-glass/         # Liquid Glass 主题（当前激活）
+│       │   ├── theme.css         # 结构 CSS（blob 动画 + 玻璃卡片结构，无颜色）
+│       │   ├── schemes/          # 配色方案
+│       │   │   ├── aurora.css    #   靛蓝极光（默认）
+│       │   │   ├── sunset.css    #   日落珊瑚
+│       │   │   ├── ocean.css     #   深海蓝绿
+│       │   │   └── rose.css      #   玫瑰粉
+│       │   ├── Navbar.tsx
+│       │   ├── PostCard.tsx
+│       │   ├── Footer.tsx
+│       │   └── Profile.tsx
 │       └── <your-theme>/         # 自定义主题（仅放差异化组件）
 ├── next.config.mjs
 ├── tailwind.config.ts
@@ -192,7 +204,7 @@ resolvePostDate(frontmatterDate, filePath)
 
 #### CSS 变量系统
 
-`app/globals.css` 定义 7 个语义变量，支持 `prefers-color-scheme` 自动切换：
+`app/globals.css` 定义 7 个语义变量作为 **兜底默认值**（base 主题生效），各主题通过自己的 `theme.css` 覆盖：
 
 | Tailwind 类 | CSS 变量 | 含义 |
 |:---|:---|:---|
@@ -211,6 +223,33 @@ resolvePostDate(frontmatterDate, filePath)
 ```ts
 import "highlight.js/styles/github.css";
 ```
+
+#### 主题 CSS 注入机制（ThemeGlobalStyles）
+
+`src/core/ThemeGlobalStyles.tsx` 是一个 Server Component，在构建时读取当前主题的 CSS 文件并以内联 `<style>` 注入到 `<head>`。支持两种模式：
+
+**无配色方案（普通主题）**
+```
+app/layout.tsx <head>
+  └── <ThemeGlobalStyles />
+        └── fs.readFileSync(`src/themes/${theme}/theme.css`)
+              → <style>{ css }</style>
+```
+
+**有配色方案（如 liquid-glass）**
+```
+app/layout.tsx <head>
+  └── <ThemeGlobalStyles />
+        ├── fs.readFileSync(`src/themes/${theme}/schemes/${colorScheme}.css`)
+        │     （颜色变量 + blob 颜色 + 卡片阴影）
+        └── fs.readFileSync(`src/themes/${theme}/theme.css`)
+              （blob 动画关键帧 + 结构类，无颜色）
+              → <style>{ 合并后的 css }</style>
+```
+
+配色方案通过 `siteConfig.themeOptions.colorScheme` 指定，`ThemeGlobalStyles` 自动按路径加载，找不到时静默忽略（回退到 base 兜底变量）。
+
+**设计目标**：主题切换（包括颜色变量、动画、特效类、配色方案）完全在 `src/themes/<name>/` 内完成，不需要修改 `app/` 目录下的任何文件。`app/globals.css` 仅保留结构性样式和 base 兜底变量。
 
 #### Base 主题组件
 
@@ -387,11 +426,12 @@ Next.js App Router 中，Server Component 不能包含 `useState` 等客户端 H
 ### 创建自定义主题
 
 1. 在 `src/themes/` 下新建目录，例如 `src/themes/dark-pro/`
-2. 只放需要覆盖的组件，其余自动继承 `base` 主题
+2. 按需放置组件和/或 `theme.css`，其余自动继承 `base` 主题
 
    ```text
    src/themes/dark-pro/
-   └── Navbar.tsx    ← 只覆盖导航栏，其他组件用 base 的
+   ├── theme.css     ← 颜色变量、动画、特效类（可选）
+   └── Navbar.tsx    ← 覆盖导航栏（可选）
    ```
 
 3. 修改 `src/core/config.ts`：
@@ -401,6 +441,51 @@ Next.js App Router 中，Server Component 不能包含 `useState` 等客户端 H
    ```
 
 4. 重新构建：`npm run build`
+
+> **无需修改 `app/` 目录任何文件。** `ThemeGlobalStyles` 会自动读取并注入新主题的 `theme.css`。
+
+### 多配色方案（schemes/）
+
+若一个主题需要支持多套配色（如 `liquid-glass`），可将颜色相关 CSS 拆分到 `schemes/` 子目录：
+
+```text
+src/themes/my-theme/
+├── theme.css           ← 结构 CSS（动画、卡片形状，不含颜色）
+└── schemes/
+    ├── default.css     ← 默认配色
+    └── warm.css        ← 暖色配色
+```
+
+在 `config.ts` 中通过 `themeOptions.colorScheme` 选择：
+
+```ts
+theme: 'my-theme',
+themeOptions: {
+  colorScheme: 'warm',   // 对应 schemes/warm.css
+},
+```
+
+`ThemeGlobalStyles` 会自动将 `schemes/{colorScheme}.css`（颜色）与 `theme.css`（结构）合并后注入。
+
+### theme.css 结构（推荐）
+
+```css
+/* 亮色调色板 */
+:root {
+  --color-background: ...;
+  --color-primary: ...;
+  /* 其他变量 */
+}
+
+/* 暗色调色板 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { ... }
+}
+[data-theme="dark"] { ... }
+
+/* 主题特效类（动画、卡片样式等） */
+.my-card { ... }
+```
 
 ### 组件 Props 类型
 
@@ -413,16 +498,10 @@ Next.js App Router 中，Server Component 不能包含 `useState` 等客户端 H
 | `ArchiveList` | `ArchiveListProps` |
 | `Calendar` | `CalendarProps` |
 | `Pagination` | `PaginationProps` |
-
-### 修改全局颜色
-
-不需要自定义组件，只需覆盖 `globals.css` 中的 CSS 变量：
-
-```css
-:root {
-  --color-primary: #e11d48;  /* 改为玫红主色 */
-}
-```
+| `TagList` | `TagListProps` |
+| `CategoryList` | `CategoryListProps` |
+| `Footer` | `FooterProps` |
+| `Profile` | `ProfileProps` |
 
 ---
 

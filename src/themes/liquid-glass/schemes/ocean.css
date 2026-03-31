@@ -1,0 +1,88 @@
+/* ─── Ocean：深海蓝绿 ────────────────────────────────── */
+
+/* 亮色 */
+:root {
+  --color-background: #f0fafb;
+  --color-surface:    #ffffff;
+  --color-border:     #cdf4f8;
+  --color-primary:    #0891b2;
+  --color-secondary:  #0d9488;
+  --color-text:       #052e38;
+  --color-text-muted: #3a7a8a;
+}
+
+/* 暗色 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #00131a;
+    --color-surface:    #001e2a;
+    --color-border:     #003d50;
+    --color-primary:    #22d3ee;
+    --color-secondary:  #2dd4bf;
+    --color-text:       #e0f8ff;
+    --color-text-muted: #5aabb8;
+  }
+}
+[data-theme="dark"] {
+  --color-background: #00131a;
+  --color-surface:    #001e2a;
+  --color-border:     #003d50;
+  --color-primary:    #22d3ee;
+  --color-secondary:  #2dd4bf;
+  --color-text:       #e0f8ff;
+  --color-text-muted: #5aabb8;
+}
+
+/* Blob 颜色 */
+@media (prefers-reduced-motion: no-preference) {
+  body::before { background: #22d3ee; opacity: 0.20; }
+  body::after  { background: #2dd4bf; opacity: 0.16; }
+}
+.lgl-blob-3 { background: #38bdf8; }
+@media (prefers-reduced-motion: no-preference) {
+  .lgl-blob-3 { opacity: 0.13; }
+}
+[data-theme="dark"] body::before { background: #0891b2; opacity: 0.28; }
+[data-theme="dark"] body::after  { background: #0d9488; opacity: 0.22; }
+[data-theme="dark"] .lgl-blob-3  { background: #0369a1; opacity: 0.18; }
+
+/* 卡片 */
+.lgl-glass-card {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(200, 240, 248, 0.80);
+  box-shadow:
+    0 8px 32px -4px rgba(8, 145, 178, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+.lgl-glass-card:hover {
+  border-color: rgba(34, 211, 238, 0.50);
+  box-shadow:
+    0 16px 40px -4px rgba(8, 145, 178, 0.14),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+[data-theme="dark"] .lgl-glass-card {
+  background: rgba(0, 30, 42, 0.62);
+  border: 1px solid rgba(34, 211, 238, 0.14);
+  box-shadow:
+    0 8px 32px -4px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(150, 240, 255, 0.05);
+}
+[data-theme="dark"] .lgl-glass-card:hover {
+  border-color: rgba(34, 211, 238, 0.32);
+  box-shadow:
+    0 16px 40px -4px rgba(0, 0, 0, 0.55),
+    0 4px 16px rgba(8, 145, 178, 0.18),
+    inset 0 1px 0 rgba(150, 240, 255, 0.08);
+}
+
+/* Navbar */
+.lgl-navbar {
+  background: rgba(240, 250, 251, 0.72);
+  border-bottom: 1px solid rgba(180, 240, 248, 0.55);
+}
+[data-theme="dark"] .lgl-navbar {
+  background: rgba(0, 19, 26, 0.78);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+}

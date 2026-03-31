@@ -3,6 +3,7 @@ import "./globals.css";
 import "highlight.js/styles/github.css";
 import { siteConfig } from "@/src/core/config";
 import { ThemedNavbar, ThemedFooter } from "@/src/core/ThemeResolver";
+import { ThemeGlobalStyles } from "@/src/core/ThemeGlobalStyles";
 
 // 阻塞式内联脚本：在 React 水合前设置正确主题，避免 FOUC
 const themeScript = `(function(){var s=localStorage.getItem('theme');var t=s==='light'||s==='dark'?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();`;
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="zh-CN">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <ThemeGlobalStyles />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-text antialiased">
         <ThemedNavbar />

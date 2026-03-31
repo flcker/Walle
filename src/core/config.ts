@@ -9,7 +9,11 @@ export const siteConfig = {
   title: 'Walle Blog',
   description: '一个简洁的静态博客',
   author: 'Your Name',
-  theme: 'base',
+  theme: 'liquid-glass',
+  themeOptions: {
+    // liquid-glass 配色方案：'aurora'（靛蓝极光）| 'sunset'（日落珊瑚）| 'ocean'（深海蓝绿）| 'rose'（玫瑰粉）
+    colorScheme: 'sunset' as 'aurora' | 'sunset' | 'ocean' | 'rose',
+  },
   postsPerPage: 10,
   features: {
     search: true,
